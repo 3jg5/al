@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>إدارة الدعوة</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Tajawal,system-ui,sans-serif;background:#f3f5f4;color:#17211d;line-height:1.7}
+header{position:sticky;top:0;z-index:5;background:#052f25;color:#fff;padding:.6rem 1rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+header b{flex:1;font-size:1.1rem}
+main{max-width:52rem;margin:1rem auto;padding:0 1rem 6rem}
+details{background:#fff;border:1px solid #dfe5e2;border-radius:14px;margin-bottom:.8rem}
+summary{cursor:pointer;padding:.9rem 1rem;font-weight:700;font-size:1.05rem;list-style:none}
+summary::after{content:"＋";float:left;color:#7a6f28}details[open] summary::after{content:"－"}
+.in{padding:0 1rem 1rem;display:grid;gap:.8rem}
+label{display:block;font-weight:600;font-size:.92rem;margin-bottom:.2rem}
+input[type=text],input[type=date],input[type=time],input[type=password],textarea{width:100%;padding:.65rem .8rem;border:1px solid #cfd8d4;border-radius:10px;font:inherit;background:#fff}
+textarea{min-height:5rem;resize:vertical}
+.row{display:grid;gap:.6rem;grid-template-columns:1fr}@media(min-width:600px){.row{grid-template-columns:1fr 1fr}}
+.item{border:1px dashed #cfd8d4;border-radius:12px;padding:.8rem;display:grid;gap:.5rem;background:#fafcfb}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid #cfd8d4;background:#fff;padding:.55rem 1rem;font-weight:700}
+button.p{background:#052f25;color:#fff;border-color:#052f25}button.g{background:#dec462;border-color:#dec462;color:#052f25}button.d{color:#b42318;border-color:#f1c0bb}
+header button{background:transparent;color:#fff;border-color:#ffffff55}header button.g{background:#dec462;color:#052f25}
+.hint{font-size:.82rem;color:#5b6a63}.msg{padding:.7rem 1rem;border-radius:10px;margin:.6rem 0;font-weight:600}
+.ok{background:#e2f5ea;color:#0b6b33}.er{background:#fde8e6;color:#b42318}
+img.th{height:70px;border-radius:8px;object-fit:cover}
+.chk{display:flex;gap:.5rem;align-items:center;font-weight:600}
+</style></head><body>
+<header><b>إدارة دعوة الملتقى</b><button id="dl">تحميل config.js</button><button id="cp">نسخ</button><button class="g" id="pub">نشر مباشرة ✔</button></header>
+<main>
+<div class="msg" id="msg" hidden></div>
+<p class="hint">كل تعديل هنا يُحفظ في متصفحكم تلقائيًا كمسودة. للنشر: إما زر «نشر مباشرة» (يحتاج إعدادًا لمرة واحدة بالأسفل)، أو «تحميل config.js» ثم ارفعوه على GitHub مكان الملف القديم.</p>
+<div id="f"></div>
+<details><summary>⚙ إعداد النشر المباشر (مرة واحدة)</summary><div class="in">
+<p class="hint">1) في GitHub: Settings ← Developer settings ← Personal access tokens ← Fine-grained tokens ← Generate. اختاروا مستودع الموقع فقط، وصلاحية Contents = Read and write.<br>2) الصقوا الرمز هنا. يُحفظ في هذا المتصفح فقط، ولا يُرسل إلا إلى GitHub. لا تشاركوه مع أحد.</p>
+<div class="row"><div><label>اسم حساب GitHub (Owner)</label><input type="text" id="go" dir="ltr"></div><div><label>اسم المستودع (Repo)</label><input type="text" id="gr" dir="ltr"></div></div>
+<div><label>الرمز (Token)</label><input type="password" id="gt" dir="ltr"></div>
+<button id="gs">حفظ الإعداد</button></div></details>
+</main>
+<script src="config.js"></script>
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)};
+var base=JSON.parse(JSON.stringify(CONFIG)), cfg=base;
+try{var d=localStorage.getItem("draft_cfg"); if(d) cfg=JSON.parse(d)}catch(e){}
+function get(p){return p.split(".").reduce(function(o,k){return o==null?o:o[k]},cfg)}
+function set(p,v){var a=p.split("."),o=cfg;for(var i=0;i<a.length-1;i++)o=o[a[i]];o[a[a.length-1]]=v;save()}
+function save(){try{localStorage.setItem("draft_cfg",JSON.stringify(cfg))}catch(e){msg("المسودة كبيرة ولم تُحفظ في المتصفح (الصور). انشروا الآن.",0)}}
+function msg(t,ok){var m=$("#msg");m.textContent=t;m.className="msg "+(ok?"ok":"er");m.hidden=false;scrollTo(0,0)}
+function el(h){var d=document.createElement("div");d.innerHTML=h;return d.firstElementChild}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+
+/* حقل عادي */
+function field(p,l,type,hint){
+  var v=get(p),w=el("<div><label>"+l+"</label></div>"),i;
+  if(type==="bool"){w=el('<label class="chk"></label>');i=el('<input type="checkbox">');i.checked=!!v;i.onchange=function(){set(p,i.checked)};w.appendChild(i);w.appendChild(document.createTextNode(" "+l));return w}
+  if(type==="area"){i=el("<textarea></textarea>");i.value=v||""}
+  else if(type==="lines"){i=el("<textarea></textarea>");i.value=(v||[]).join("\n")}
+  else{i=el('<input type="'+(type||"text")+'">');i.value=v||"";if(type==="date"||type==="time"||/lat|lng|url|Url|whatsapp|Key|file/.test(p))i.dir="ltr"}
+  i.oninput=function(){set(p,type==="lines"?i.value.split("\n").map(function(x){return x.trim()}).filter(Boolean):i.value)};
+  w.appendChild(i); if(hint)w.appendChild(el('<div class="hint">'+hint+'</div>')); return w;
+}
+/* صورة → نص مضغوط داخل الإعدادات */
+function imgField(item,key){
+  var w=el("<div><label>الصورة</label></div>"),th=el('<img class="th" alt="">'),f=el('<input type="file" accept="image/*">');
+  if(item[key]){th.src=item[key];w.appendChild(th)}
+  f.onchange=function(){var file=f.files[0];if(!file)return;var im=new Image();im.onload=function(){
+    var m=900,s=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+    item[key]=c.toDataURL("image/jpeg",.78);th.src=item[key];if(!th.parentNode)w.appendChild(th);save();URL.revokeObjectURL(im.src)};im.src=URL.createObjectURL(file)};
+  w.appendChild(f);w.appendChild(el('<div class="hint">تُصغَّر الصورة تلقائيًا وتُحفظ داخل الإعدادات (لا حاجة لرفعها كملف).</div>'));return w;
+}
+/* قائمة */
+function list(box,p,defs,blank,imgKey){
+  function draw(){box.innerHTML="";(get(p)||[]).forEach(function(it,idx){
+    var c=el('<div class="item"></div>');
+    defs.forEach(function(d){var i=el(d[2]==="area"?"<textarea></textarea>":'<input type="text">');i.placeholder=d[1];i.value=it[d[0]]||"";if(/file/.test(d[0]))i.dir="ltr";i.oninput=function(){it[d[0]]=i.value;save()};c.appendChild(el("<label>"+d[1]+"</label>"));c.appendChild(i)});
+    if(imgKey)c.appendChild(imgField(it,imgKey));
+    var r=el('<button class="d">حذف</button>');r.onclick=function(){get(p).splice(idx,1);save();draw()};c.appendChild(r);box.appendChild(c)});
+    var a=el('<button class="p">＋ إضافة</button>');a.onclick=function(){get(p).push(JSON.parse(JSON.stringify(blank)));save();draw()};box.appendChild(a)}
+  draw();
+}
+function sec(title,build){var d=el("<details><summary>"+title+"</summary><div class='in'></div></details>");build(d.lastChild);$("#f").appendChild(d)}
+function rowOf(a){var r=el('<div class="row"></div>');a.forEach(function(x){r.appendChild(x)});return r}
+
+sec("📅 الموعد (الأهم)",function(b){
+  b.appendChild(field("event.date","تاريخ الملتقى","date"));
+  b.appendChild(rowOf([field("event.startTime","وقت البداية","time"),field("event.endTime","وقت النهاية (اختياري)","time")]));
+  b.appendChild(el('<div class="hint">الوقت بتوقيت مسقط.</div>'));
+});
+sec("🏫 بيانات عامة",function(b){
+  ["school:اسم المدرسة","forumTitle:عنوان الملتقى","academicYear:العام الدراسي","tagline:الشعار اللفظي","directorName:اسم المدير","directorTitle:صفة المدير","footerNote:ملاحظة أسفل الصفحة"].forEach(function(x){var s=x.split(":");b.appendChild(field(s[0],s[1]))});
+  b.appendChild(field("welcome","جملة الترحيب","area"));b.appendChild(field("introLine","جملة الافتتاحية","text"));
+  b.appendChild(field("maintenance","إخفاء الدعوة مؤقتًا (وضع الصيانة)","bool"));
+});
+sec("✉ الرسالة",function(b){b.appendChild(field("letterTitle","العنوان"));b.appendChild(field("letter","نص الرسالة (اتركوا سطرًا فارغًا بين الفقرات)","area"))});
+sec("🎙 الكلمة الصوتية",function(b){
+  b.appendChild(field("audio.enabled","عرض القسم","bool"));b.appendChild(field("audio.file","اسم ملف الصوت","text","ارفعوا ملف الصوت على GitHub بجانب index.html (لا يمكن رفعه من هنا)، ثم اكتبوا اسمه مثل voice.mp3"));
+  b.appendChild(field("audio.title","العنوان"));b.appendChild(field("audio.transcript","نص الكلمة","area"))});
+sec("🎯 الأهداف",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"goals",[["title","العنوان"],["text","الوصف","area"]],{icon:"star",title:"",text:""})});
+sec("🕒 البرنامج",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"program",[["time","الوقت (مثال: ٥:٣٠ م)"],["title","العنوان"],["text","وصف (اختياري)"]],{time:"",title:"",text:""})});
+sec("📍 الموقع",function(b){
+  b.appendChild(field("location.name","اسم المكان"));b.appendChild(field("location.address","العنوان التفصيلي"));
+  b.appendChild(rowOf([field("location.wilayat","الولاية"),field("location.governorate","المحافظة")]));
+  b.appendChild(rowOf([field("location.lat","خط العرض"),field("location.lng","خط الطول")]));b.appendChild(field("location.mapsUrl","رابط خرائط جوجل"));
+  b.appendChild(field("location.tips","نصائح للوصول (سطر لكل نصيحة)","lines"))});
+sec("✅ تأكيد الحضور",function(b){
+  b.appendChild(field("rsvp.enabled","تفعيل القسم","bool"));b.appendChild(field("rsvp.whatsapp","رقم واتساب لاستقبال الردود","text","بصيغة دولية بدون +، مثل 96899123456"));
+  b.appendChild(field("rsvp.collectCount","سؤال عن عدد الحضور","bool"));b.appendChild(field("rsvp.description","وصف القسم","area"));
+  b.appendChild(el('<div class="hint">اختياري (قاعدة بيانات Supabase):</div>'));b.appendChild(field("rsvp.supabase.url","Supabase URL"));b.appendChild(field("rsvp.supabase.anonKey","Supabase anon key"))});
+sec("👨‍🏫 المعلمون",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"teachers.items",[["name","الاسم"],["role","المادة/الدور"],["text","نبذة","area"]],{name:"",role:"",text:"",photo:""},"photo")});
+sec("🖼 معرض الصور",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"gallery.photos",[["caption","وصف الصورة"]],{file:"",caption:""},"file");
+  b.appendChild(el('<div class="hint">الصور تُحفظ داخل الإعدادات؛ استخدموا حتى ١٠ صور لتبقى الصفحة سريعة.</div>'))});
+sec("🗣 أصوات الطلبة",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"voices.items",[["name","اسم الطالب"],["file","اسم ملف الصوت (يُرفع على GitHub)"]],{name:"",file:""})});
+sec("💬 عبارات اليوم",function(b){b.appendChild(field("quotes","عبارة في كل سطر","lines"))});
+sec("📤 المشاركة",function(b){b.appendChild(field("share.enabled","عرض القسم","bool"));b.appendChild(field("share.title","العنوان"));b.appendChild(field("share.text","نص الرسالة","area"))});
+sec("🎓 ما بعد الملتقى",function(b){
+  b.appendChild(field("after.message","رسالة الشكر","area"));b.appendChild(field("after.recommendations","أبرز التوصيات (سطر لكل توصية)","lines"));
+  b.appendChild(field("after.surveyUrl","رابط الاستبيان (Google Forms مثلًا)"));b.appendChild(field("after.certificate","تفعيل شهادة الشكر","bool"));b.appendChild(field("after.certText","نص الشهادة","area"))});
+sec("↩ إرجاع الإعدادات",function(b){var r=el('<button class="d">مسح المسودة والعودة للإعدادات المنشورة</button>');r.onclick=function(){if(confirm("متأكدون؟")){try{localStorage.removeItem("draft_cfg")}catch(e){}location.reload()}};b.appendChild(r)});
+
+function out(){return "var CONFIG = "+JSON.stringify(cfg,null,2)+";\n"}
+function b64(s){var u=new TextEncoder().encode(s),b="";u.forEach(function(x){b+=String.fromCharCode(x)});return btoa(b)}
+$("#dl").onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out()],{type:"text/javascript"}));a.download="config.js";a.click();msg("تم تحميل config.js. ارفعوه على GitHub مكان الملف القديم.",1)};
+$("#cp").onclick=function(){navigator.clipboard.writeText(out()).then(function(){msg("تم النسخ. الصقوه داخل config.js على GitHub.",1)},function(){msg("تعذّر النسخ، استخدموا التحميل.",0)})};
+var S={};try{S=JSON.parse(localStorage.getItem("gh")||"{}")}catch(e){}
+$("#go").value=S.o||"";$("#gr").value=S.r||"";$("#gt").value=S.t||"";
+$("#gs").onclick=function(){S={o:$("#go").value.trim(),r:$("#gr").value.trim(),t:$("#gt").value.trim()};try{localStorage.setItem("gh",JSON.stringify(S))}catch(e){}msg("تم حفظ إعداد النشر.",1)};
+$("#pub").onclick=function(){
+  if(!S.o||!S.r||!S.t) return msg("أكملوا «إعداد النشر المباشر» بالأسفل أولًا، أو استخدموا تحميل config.js.",0);
+  var url="https://api.github.com/repos/"+S.o+"/"+S.r+"/contents/config.js",h={Authorization:"Bearer "+S.t,Accept:"application/vnd.github+json"};
+  $("#pub").disabled=true;
+  fetch(url,{headers:h}).then(function(r){if(!r.ok)throw new Error("تعذّر الوصول للمستودع. تأكدوا من الاسم والرمز والصلاحية.");return r.json()})
+  .then(function(j){return fetch(url,{method:"PUT",headers:h,body:JSON.stringify({message:"تحديث إعدادات الدعوة",content:b64(out()),sha:j.sha})})})
+  .then(function(r){if(!r.ok)throw new Error("فشل النشر (الصلاحية؟).");msg("تم النشر ✔ سيظهر التحديث على الموقع خلال دقيقة تقريبًا.",1)})
+  .catch(function(e){msg(e.message||"حدث خطأ",0)}).then(function(){$("#pub").disabled=false});
+};
+})();
+</script></body></html>
