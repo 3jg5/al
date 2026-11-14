@@ -260,7 +260,7 @@ function setupRsvp(){
     var msg="السلام عليكم، أنا "+name+"، "+(st==="attending"?"أؤكد حضوري":"أعتذر عن الحضور")+" لـ"+C.forumTitle+" في "+C.school+(r.collectCount&&st==="attending"?"، عدد الحضور: "+gc:"")+".";
     if(r.supabase&&r.supabase.url&&r.supabase.anonKey){
       btn.disabled=true;btn.textContent="جارٍ الإرسال…";
-      fetch(r.supabase.url.replace(/\/$/,"")+"/rest/v1/rsvps",{method:"POST",headers:{"Content-Type":"application/json",apikey:r.supabase.anonKey,Authorization:"Bearer "+r.supabase.anonKey,Prefer:"return=minimal"},
+      fetch(r.supabase.url.replace(/\/$/,"")+"/rest/v1/rsvps",{method:"POST",headers:(function(){var h={"Content-Type":"application/json",apikey:r.supabase.anonKey,Prefer:"return=minimal"};if(r.supabase.anonKey.indexOf("sb_")!==0)h.Authorization="Bearer "+r.supabase.anonKey;return h})(),
         body:JSON.stringify({name:name.slice(0,80),status:st,guests:st==="attending"?(r.collectCount?gc:1):0})})
       .then(function(x){ if(!x.ok) throw 0; done()}).catch(function(){btn.disabled=false;btn.textContent="إرسال";show("تعذّر الإرسال حاليًا. حاولوا لاحقًا.")});
     } else if(r.whatsapp){
