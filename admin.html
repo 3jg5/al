@@ -131,7 +131,7 @@ sec("↩ إرجاع الإعدادات",function(b){var r=el('<button class="d">
 
 var SQL=["create table if not exists public.rsvps (id uuid primary key default gen_random_uuid(), name text not null check (char_length(name) between 2 and 80), status text not null check (status in ('attending','declined')), guests int not null default 1 check (guests between 0 and 20), created_at timestamptz not null default now());","alter table public.rsvps enable row level security;","create table if not exists public.admins (email text primary key);","alter table public.admins enable row level security;","create policy anon_insert_rsvp on public.rsvps for insert to anon with check (true);","create policy admin_read_rsvp on public.rsvps for select to authenticated using (exists (select 1 from public.admins a where a.email = auth.jwt()->>'email'));","create policy admin_delete_rsvp on public.rsvps for delete to authenticated using (exists (select 1 from public.admins a where a.email = auth.jwt()->>'email'));","-- غيّروا البريد ثم شغّلوا:","insert into public.admins values ('your-email@example.com');"].join("\n");
 var T=null,rows=[];try{T=sessionStorage.getItem("sbt")}catch(e){}
-function sb(){var r=(cfg.rsvp&&cfg.rsvp.supabase)||{};return {u:(r.url||"").replace(/\/$/,""),k:r.anonKey||""}}
+function sb(){var r=(cfg.rsvp&&cfg.rsvp.supabase)||{};return {u:(r.url||"").trim().replace(/\/+$/,"").replace(/\/rest\/v1$/,""),k:r.anonKey||""}}
 function esc2(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function drawAtt(){
   var a=$("#att"),c=sb();a.innerHTML="<h2>📋 تأكيدات الحضور</h2>";
