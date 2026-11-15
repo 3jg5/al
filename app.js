@@ -1,4 +1,5 @@
-var IMG = { school: "farooq-logo.png", light: "farooq-logo-light.png", moe: "moe-logo.png", vision: "oman-2040.png" };
+var IMG = { school: "farooq-logo.webp?v=71ccd726", light: "farooq-logo-light.webp?v=035bde14", moe: "moe-logo.webp?v=01707d7c", vision: "oman-2040.webp?v=fa9ae8fa" };
+var DIM = { light: [360,438], moe: [160,160], vision: [224,140] };
 (function(){
 "use strict";
 var C = CONFIG, $ = function(s,r){return (r||document).querySelector(s)}, $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
@@ -9,12 +10,18 @@ var AR = new Intl.NumberFormat("ar-OM-u-nu-arab", {useGrouping:false});
 var nA = function(n){return AR.format(n)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function pass(a){return !!a}
+/* تحليلات: dataLayer (GTM) + gtag + Plausible + حدث مخصص؛ لا شيء يُرسل إن لم تكن هذه الأدوات موجودة */
+function track(n,p){ if(C.analytics===false) return; p=p||{}; try{ (window.dataLayer=window.dataLayer||[]).push(Object.assign({event:n},p)); if(window.gtag) window.gtag("event",n,p); if(window.plausible) window.plausible(n,{props:p}); window.dispatchEvent(new CustomEvent("forum:analytics",{detail:{name:n,params:p}})) }catch(e){} }
+var MIME={mp3:"audio/mpeg",wav:"audio/wav",m4a:"audio/mp4",aac:"audio/aac",ogg:"audio/ogg",oga:"audio/ogg",webm:"audio/webm"};
+function mimeOf(f){var m=String(f).split("?")[0].split(".").pop().toLowerCase();return MIME[m]||"audio/mpeg"}
 var ICONS = {
  handshake:'<path d="M3 11l4-4 4 2 3-3 7 7-4 4-3-1-2 2a2 2 0 01-3 0l-5-5z"/>',
  chart:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
  chat:'<path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/>',
  heart:'<path d="M12 21s-8-5.2-8-11a4.5 4.5 0 018-2.8A4.5 4.5 0 0120 10c0 5.8-8 11-8 11z"/>',
  people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M17 14c2.5 0 4.5 2 4.5 4.5"/>',
+ vol:'<path d="M4 9v6h4l5 4V5L8 9zM16.500 8.500a5 5 0 010 7M19 6a8.500 8.500 0 010 12"/>',
+ mute:'<path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/>',
  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
  cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -47,10 +54,16 @@ function ended(){return EV && Date.now()>EV.end || qs.get("after")==="1"}
 /* ───── بناء الصفحة ───── */
 var app=$("#app");
 function logosHtml(){
-  var order=[["l1",IMG.light,"شعار المدرسة"]];
-  if(C.showMinistryLogo) order.push(["l2",IMG.moe,"شعار وزارة التربية والتعليم"]);
-  if(C.showVisionLogo) order.push(["l3",IMG.vision,"رؤية عُمان ٢٠٤٠"]);
-  return '<div class="logos">'+order.map(function(o){return '<img class="'+o[0]+'" src="'+o[1]+'" alt="'+o[2]+'">'}).join("")+'</div>';
+  var o='<img class="l1" src="'+IMG.light+'" width="'+DIM.light[0]+'" height="'+DIM.light[1]+'" alt="شعار المدرسة" loading="lazy" decoding="async">';
+  if(C.showMinistryLogo) o+='<img class="l2" src="'+IMG.moe+'" width="'+DIM.moe[0]+'" height="'+DIM.moe[1]+'" alt="شعار وزارة التربية والتعليم" loading="lazy" decoding="async">';
+  if(C.showVisionLogo) o+='<img class="l3" src="'+IMG.vision+'" width="'+DIM.vision[0]+'" height="'+DIM.vision[1]+'" alt="رؤية عُمان ٢٠٤٠" loading="lazy" decoding="async">';
+  return '<div class="logos">'+o+'</div>';
+}
+function heroLogos(){
+  function side(on,k,alt){return '<div class="side">'+(on?'<img src="'+IMG[k]+'" width="'+DIM[k][0]+'" height="'+DIM[k][1]+'" alt="'+alt+'" decoding="async">':'')+'</div>'}
+  return '<div class="hl">'+side(C.showMinistryLogo,"moe","شعار وزارة التربية والتعليم")+
+  '<div class="orb"><img src="'+IMG.light+'" width="'+DIM.light[0]+'" height="'+DIM.light[1]+'" alt="شعار المدرسة" fetchpriority="high" decoding="async"><span class="orbit css" aria-hidden="true"><i></i></span></div>'+
+  side(C.showVisionLogo,"vision","رؤية عُمان ٢٠٤٠")+'</div>';
 }
 function head(eyebrow,title,lead){return '<div class="head rv"><span class="eyebrow">'+esc(eyebrow)+'</span><h2>'+esc(title)+'</h2>'+(lead?'<p class="lead">'+esc(lead)+'</p>':'')+'</div>'}
 function words(t){return String(t).split(/\s+/).filter(Boolean).map(function(w,i){return '<span class="sw" style="--i:'+i+'"><span>'+esc(w)+'</span></span>'}).join(" ")}
@@ -61,9 +74,9 @@ function sHero(){
   else info.push(["cal","الموعد","يُعلن قريبًا"]);
   info.push(["pin","المكان",C.location.name]);
   return '<header id="hero"><div class="bgl"><div class="aurora"></div><div class="bg-geo" style="position:absolute;inset:0;opacity:.8"></div><canvas class="pt" id="hp"></canvas></div>'+
-  '<div class="wrap in-w">'+logosHtml()+
+  '<div class="wrap in-w">'+heroLogos()+
   (guestName?'<p class="gold rv" style="font-size:1.3rem;margin-bottom:.5rem">أهلاً بكم، '+esc(guestName)+'</p>':'')+
-  '<p class="rv" style="color:rgb(var(--ink)/.8);font-size:1.1rem">'+esc(C.school)+'</p>'+
+  '<p class="rv" style="color:rgb(var(--ink)/.85);font-size:1.1rem;padding-top:.9rem">'+esc(C.school)+'</p>'+
   '<h1 class="shiny">'+words(C.forumTitle)+'</h1>'+
   (C.academicYear?'<span class="chip rv">'+esc(C.academicYear)+'</span>':'')+
   '<p class="tag rv">'+esc(C.tagline)+'</p>'+
@@ -74,10 +87,11 @@ function sHero(){
 }
 function sAudio(){
   var a=C.audio; if(!a.enabled||!a.file) return "";
-  return '<section class="s" id="audio"><div class="wrap"><div class="audio card rv"><div class="dir"><span class="av"><img src="'+IMG.light+'" alt=""></span><div><p class="gold" style="font-weight:700;font-size:.9rem">رسالة صوتية</p><h2 class="disp" style="font-size:1.6rem;line-height:1.4">'+esc(a.title)+'</h2>'+(C.directorName?'<p style="color:rgb(var(--ink)/.7)">'+esc(C.directorName)+' · '+esc(C.directorTitle)+'</p>':'')+'</div></div>'+
-  '<div class="pl" id="pl"><button class="btn b-gold pb" id="pbtn" aria-label="تشغيل">'+ic("play",26)+'</button><div style="flex:1;min-width:0"><div class="wave" id="wave" role="slider" aria-label="موضع التشغيل" tabindex="0">'+Array.apply(null,Array(36)).map(function(_,i){return '<i style="height:'+(30+Math.abs(Math.sin(i*1.7))*70)+'%;--k:'+i+'"></i>'}).join("")+'</div><div class="tm"><span id="tc">٠:٠٠</span><span id="td">٠:٠٠</span></div></div>'+
-  '<button class="btn-i" id="spd" aria-label="سرعة التشغيل">١×</button></div>'+
-  '<audio id="au" preload="none" src="'+esc(a.file)+'"></audio>'+
+  return '<section class="s" id="audio" aria-labelledby="audt"><div class="wrap"><div class="audio card rv"><div class="dir"><span class="av"><img src="'+IMG.light+'" width="'+DIM.light[0]+'" height="'+DIM.light[1]+'" alt="" loading="lazy" decoding="async"></span><div><p class="gold" style="font-weight:700;font-size:.9rem">رسالة صوتية</p><h2 id="audt" class="disp" style="font-size:1.6rem;line-height:1.4">'+esc(a.title)+'</h2>'+(C.directorName?'<p style="color:rgb(var(--ink)/.7)">'+esc(C.directorName)+' · '+esc(C.directorTitle)+'</p>':'')+'</div></div>'+
+  '<div class="pl" id="pl"><button class="btn b-gold pb" id="pbtn" aria-label="تشغيل الكلمة الصوتية">'+ic("play",26)+'</button><div style="flex:1;min-width:0"><div class="wave" id="wave" role="slider" aria-label="موضع التشغيل" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">'+Array.apply(null,Array(36)).map(function(_,i){return '<i style="height:'+(30+Math.abs(Math.sin(i*1.7))*70)+'%;--k:'+i+'"></i>'}).join("")+'</div><div class="tm"><span id="tc">٠:٠٠</span><span id="td">٠:٠٠</span></div></div>'+
+  '<button class="btn-i" id="mut" aria-label="كتم الصوت" aria-pressed="false">'+ic("vol",20)+'</button><button class="btn-i" id="spd" aria-label="سرعة التشغيل: ١×">١×</button></div>'+
+  '<p class="small" id="ast" role="status" aria-live="polite" style="margin-top:.75rem"></p>'+
+  '<audio id="au" preload="metadata"><source src="'+esc(a.file)+'" type="'+mimeOf(a.file)+'"></audio>'+
   (a.transcript?'<details class="tx"><summary>اقرأ نص الكلمة</summary><p>'+esc(a.transcript)+'</p></details>':'')+'</div></div></section>';
 }
 function sVoices(){
@@ -104,9 +118,6 @@ function sEvent(){
   }
   return '<section class="s" id="event">'+'<div class="wrap">'+head("الموعد","موعد الملتقى")+body+'</div></section>';
 }
-function sProgram(){
-  return '<section class="s" id="program" style="background:rgb(var(--bg2)/.5)"><div class="wrap">'+head("جدول الملتقى","برنامج اليوم")+'<ol class="tl">'+C.program.map(function(p,i){return '<li class="rv" style="--d:'+i*.05+'s"><div class="card">'+(p.time?'<span class="t">'+esc(p.time)+'</span>':'')+'<b>'+esc(p.title)+'</b>'+(p.text?'<p style="margin-top:.4rem;color:rgb(var(--ink)/.72)">'+esc(p.text)+'</p>':'')+'</div></li>'}).join("")+'</ol></div></section>';
-}
 function sLocation(){
   var L=C.location, ok=L.lat&&L.lng, ll=ok?L.lat+","+L.lng:"";
   var src=ok?'https://maps.google.com/maps?q='+encodeURIComponent(ll)+'&z=16&output=embed&hl=ar':'';
@@ -123,7 +134,7 @@ function sRsvp(){
   return '<section class="s" id="rsvp" style="background:rgb(var(--bg2)/.5)"><div class="wrap">'+head("نتشرف بحضوركم",r.title,r.description)+
   '<form class="card form rv" id="rf" novalidate><div><label class="l" for="rn">الاسم الكريم</label><input class="field" id="rn" maxlength="80" autocomplete="name" required value="'+esc(guestName)+'"></div>'+
   '<fieldset><legend>هل ستحضرون؟</legend><div class="opts"><label class="opt"><input type="radio" name="st" value="attending" checked>سأحضر بإذن الله</label><label class="opt"><input type="radio" name="st" value="declined">أعتذر عن الحضور</label></div></fieldset>'+guests+
-  '<div style="position:absolute;left:-9999px" aria-hidden="true"><input id="hp" tabindex="-1" autocomplete="off"></div>'+
+  '<div class="sr" aria-hidden="true"><input id="hp" tabindex="-1" autocomplete="off"></div>'+
   '<div class="err" id="re" role="alert" hidden></div><button class="btn b-gold" type="submit" id="rb">إرسال</button><p class="small">'+(r.supabase.url?"يُحفظ ردكم لدى إدارة المدرسة فقط.":(r.whatsapp?"سيفتح واتساب برسالة جاهزة لإرسالها إلى إدارة المدرسة.":""))+'</p></form></div></section>';
 }
 function sTeachers(){
@@ -156,13 +167,12 @@ function sFooter(){
   return '<footer><div class="wrap">'+logosHtml()+'<p class="disp" style="font-size:1.3rem">'+esc(C.school)+'</p><p style="color:rgb(var(--ink)/.6)">'+esc(C.tagline)+'</p>'+(C.footerNote?'<p class="small" style="margin-top:.5rem">'+esc(C.footerNote)+'</p>':'')+'<button class="lnk" id="replay">إعادة عرض الافتتاحية</button></div></footer>';
 }
 function sIntro(){
-  return '<div id="intro" role="dialog" aria-label="افتتاحية الدعوة"><div class="door" id="dl"></div><div class="door" id="dr"></div><div id="iglow"></div><canvas class="pt" id="ip"></canvas><div id="seam"></div>'+
-  '<div id="icont"><button id="skip">تخطّي ›</button><div class="lg" id="ilg"><svg viewBox="0 0 200 200"><circle id="ring" cx="100" cy="100" r="94" fill="none" stroke="rgb(222,196,98)" stroke-width="1.5" stroke-dasharray="590" stroke-dashoffset="590"/></svg><img src="'+IMG.light+'" alt="شعار المدرسة"></div>'+
-  '<p class="gold" id="isc" style="margin-top:1.5rem;font-weight:700;opacity:0">'+esc(C.school)+'</p><h1 id="ititle" class="shiny" style="opacity:0">'+esc(C.forumTitle)+'</h1><p id="iline" style="margin-top:1rem;max-width:30rem;color:rgb(var(--ink)/.8);opacity:0">'+esc(C.introLine)+'</p>'+
-  (C.effects.askName?'<div id="inm" style="margin-top:1.5rem;width:100%;max-width:20rem;opacity:0"><input class="field" id="inp" maxlength="40" placeholder="اكتبوا اسمكم (اختياري)" aria-label="الاسم" value="'+esc(guestName)+'" style="text-align:center"></div>':'')+
+  return '<div id="intro" role="dialog" aria-modal="true" aria-label="افتتاحية الدعوة"><div class="door" id="dl"></div><div class="door" id="dr"></div><div id="iglow"></div><canvas class="pt" id="ip" aria-hidden="true"></canvas><div id="seam"></div>'+
+  '<div id="icont"><button id="skip">تخطّي ›</button><div class="lg" id="ilg"><svg viewBox="0 0 200 200" aria-hidden="true"><circle id="ring" cx="100" cy="100" r="94" fill="none" stroke="rgb(222,196,98)" stroke-width="1.5" stroke-dasharray="590" stroke-dashoffset="590"/></svg><span class="orbit css" aria-hidden="true"><i></i></span><img src="'+IMG.light+'" width="'+DIM.light[0]+'" height="'+DIM.light[1]+'" alt="شعار المدرسة" fetchpriority="high"></div>'+
+  '<p class="gold" id="isc" style="font-weight:700;opacity:0">'+esc(C.school)+'</p><h1 id="ititle" class="shiny" style="opacity:0">'+esc(C.forumTitle)+'</h1><p id="iline" style="margin-top:1rem;max-width:30rem;color:rgb(var(--ink)/.8);opacity:0">'+esc(C.introLine)+'</p>'+
+  (C.effects.askName?'<div id="inm" style="margin-top:1.5rem;width:100%;max-width:20rem;opacity:0"><label for="inp" class="sr">الاسم</label><input class="field" id="inp" maxlength="40" placeholder="اكتبوا اسمكم (اختياري)" value="'+esc(guestName)+'" style="text-align:center"></div>':'')+
   '<button class="btn b-gold pulse" id="open" style="margin-top:1.5rem;opacity:0">افتح دعوتك</button></div></div>';
 }
-
 /* ───── أدوات ───── */
 function particles(cv,n,col){
   if(!cv||reduce) return; var x=cv.getContext("2d"),W,H,P=[],run=true;
@@ -209,18 +219,20 @@ function setupSpot(){ $$(".goal").forEach(function(c){c.addEventListener("pointe
 function setupRipple(){ document.addEventListener("pointerdown",function(e){var b=e.target.closest&&e.target.closest(".btn"); if(!b||reduce) return; var r=b.getBoundingClientRect(),s=Math.max(r.width,r.height),d=document.createElement("span");d.className="ripple";d.style.cssText="width:"+s+"px;height:"+s+"px;left:"+(e.clientX-r.left-s/2)+"px;top:"+(e.clientY-r.top-s/2)+"px";b.appendChild(d);setTimeout(function(){d.remove()},700)}) }
 
 function setupAudio(){
-  var au=$("#au"); if(!au) return; var btn=$("#pbtn"),wave=$("#wave"),bars=$$("i",wave),tc=$("#tc"),td=$("#td"),sp=$("#spd"),box=$("#pl"),rates=[1,1.25,1.5,.75],ri=0;
+  var au=$("#au"); if(!au) return; var btn=$("#pbtn"),wave=$("#wave"),bars=$$("i",wave),tc=$("#tc"),td=$("#td"),sp=$("#spd"),mu=$("#mut"),st=$("#ast"),box=$("#pl"),rates=[1,1.25,1.5,.75],ri=0,fired=false;
   function f(s){s=Math.max(0,Math.floor(s||0));return nA(Math.floor(s/60))+":"+nA(s%60).padStart(2,"٠")}
-  function upd(){var p=au.duration?au.currentTime/au.duration:0;bars.forEach(function(b,i){b.classList.toggle("on",i/bars.length<p)});tc.textContent=f(au.currentTime);if(au.duration)td.textContent=f(au.duration)}
-  btn.addEventListener("click",function(){ if(au.paused){au.play().catch(function(){})}else au.pause()});
-  au.addEventListener("play",function(){btn.innerHTML=ic("pause",26);btn.setAttribute("aria-label","إيقاف مؤقت");box.classList.add("playing")});
-  au.addEventListener("pause",function(){btn.innerHTML=ic("play",26);btn.setAttribute("aria-label","تشغيل");box.classList.remove("playing")});
-  au.addEventListener("ended",function(){box.classList.remove("playing")});
+  function upd(){var p=au.duration?au.currentTime/au.duration:0;bars.forEach(function(b,i){b.classList.toggle("on",i/bars.length<p)});tc.textContent=f(au.currentTime);if(au.duration)td.textContent=f(au.duration);wave.setAttribute("aria-valuenow",Math.round(p*100))}
+  btn.addEventListener("click",function(){ if(au.paused){ var pr=au.play(); if(pr&&pr.catch) pr.catch(function(){st.textContent="تعذّر التشغيل التلقائي؛ اضغطوا زر التشغيل مرة أخرى."}) } else au.pause()});
+  au.addEventListener("play",function(){btn.innerHTML=ic("pause",26);btn.setAttribute("aria-label","إيقاف مؤقت");box.classList.add("playing");st.textContent="";if(!fired){fired=true;track("audio_play")}});
+  au.addEventListener("pause",function(){btn.innerHTML=ic("play",26);btn.setAttribute("aria-label","تشغيل الكلمة الصوتية");box.classList.remove("playing")});
+  au.addEventListener("ended",function(){box.classList.remove("playing");track("audio_complete")});
+  au.addEventListener("error",function(){st.innerHTML='تعذّر تحميل الملف الصوتي. <a class="gold" href="'+esc(C.audio.file)+'" download>حمّلوه من هنا</a>.';btn.disabled=true});
   au.addEventListener("timeupdate",upd);au.addEventListener("loadedmetadata",upd);
   function seek(e){var r=wave.getBoundingClientRect();var p=1-(e.clientX-r.left)/r.width; if(au.duration) au.currentTime=Math.min(1,Math.max(0,p))*au.duration}
   wave.addEventListener("click",seek);
-  wave.addEventListener("keydown",function(e){if(e.key==="ArrowLeft")au.currentTime+=5;if(e.key==="ArrowRight")au.currentTime-=5});
-  sp.addEventListener("click",function(){ri=(ri+1)%rates.length;au.playbackRate=rates[ri];sp.textContent=nA(rates[ri])+"×"});
+  wave.addEventListener("keydown",function(e){if(e.key==="ArrowLeft"){au.currentTime=Math.min(au.duration||0,au.currentTime+5);e.preventDefault()}if(e.key==="ArrowRight"){au.currentTime=Math.max(0,au.currentTime-5);e.preventDefault()}});
+  sp.addEventListener("click",function(){ri=(ri+1)%rates.length;au.playbackRate=rates[ri];sp.textContent=nA(rates[ri])+"×";sp.setAttribute("aria-label","سرعة التشغيل: "+nA(rates[ri])+"×")});
+  mu.addEventListener("click",function(){au.muted=!au.muted;mu.setAttribute("aria-pressed",String(au.muted));mu.setAttribute("aria-label",au.muted?"إلغاء كتم الصوت":"كتم الصوت");mu.innerHTML=ic(au.muted?"mute":"vol",20)});
 }
 function setupCountdown(){
   if(!EV||!C.event.countdown||!$("#cd")) return;
@@ -235,43 +247,72 @@ function setupCalendar(){
   if(!EV) return; var g=$("#gcal"),i=$("#ics"); if(!g) return;
   function u(ms){return new Date(ms).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"")}
   var title=C.forumTitle+" – "+C.school, det=C.welcome+(C.location.mapsUrl?"\n"+C.location.mapsUrl:""), loc=C.location.name+(C.location.wilayat?"، "+C.location.wilayat:"");
+  g.addEventListener("click",function(){track("add_to_calendar",{type:"google"})});
   g.href="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(title)+"&dates="+u(EV.start)+"/"+u(EV.end)+"&details="+encodeURIComponent(det)+"&location="+encodeURIComponent(loc)+"&ctz=Asia/Muscat";
   i.addEventListener("click",function(){
     function al(t,d){return "BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+title+"\r\nTRIGGER:"+t+"\r\nEND:VALARM\r\n"}
     function ee(s){return s.replace(/\\/g,"\\\\").replace(/;/g,"\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n")}
-    var ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Farooq School//Forum//AR\r\nBEGIN:VEVENT\r\nUID:forum-"+EV.start+"@farooq\r\nDTSTAMP:"+u(Date.now())+"\r\nDTSTART:"+u(EV.start)+"\r\nDTEND:"+u(EV.end)+"\r\nSUMMARY:"+ee(title)+"\r\nDESCRIPTION:"+ee(det)+"\r\nLOCATION:"+ee(loc)+"\r\n"+al("-P1D")+al("-PT2H")+al("-PT1H")+"END:VEVENT\r\nEND:VCALENDAR\r\n";
-    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar;charset=utf-8"}));a.download="forum.ics";document.body.appendChild(a);a.click();a.remove();
+    var ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Farooq School//Forum//AR\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-TIMEZONE:Asia/Muscat\r\nBEGIN:VEVENT\r\nUID:parents-forum@farooq-school\r\nSEQUENCE:2\r\nSTATUS:CONFIRMED\r\nDTSTAMP:"+u(Date.now())+"\r\nDTSTART:"+u(EV.start)+"\r\nDTEND:"+u(EV.end)+"\r\nSUMMARY:"+ee(title)+"\r\nDESCRIPTION:"+ee(det)+"\r\nLOCATION:"+ee(loc)+"\r\n"+al("-P1D")+al("-PT2H")+al("-PT1H")+"END:VEVENT\r\nEND:VCALENDAR\r\n";
+    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar;charset=utf-8"}));a.download="forum.ics";document.body.appendChild(a);a.click();a.remove();track("add_to_calendar",{type:"ics"});
   });
 }
 function setupRsvp(){
-  var f=$("#rf"); if(!f) return; var r=C.rsvp,err=$("#re"),btn=$("#rb");
+  var f=$("#rf"); if(!f) return; var r=C.rsvp,err=$("#re"),btn=$("#rb"),nm=$("#rn"),sb=r.supabase||{};
   if(EV && Date.now()>EV.end){ f.outerHTML='<div class="card form"><p style="text-align:center">'+esc(r.closedMessage)+'</p></div>'; return }
-  var t0=Date.now(), last=0; try{last=+localStorage.getItem("rsvp_t")||0}catch(e){}
-  function show(m){err.textContent=m;err.hidden=false}
+  var t0=Date.now(), last=0, seen=false; try{last=+localStorage.getItem("rsvp_t")||0}catch(e){}
+  f.addEventListener("focusin",function(){if(!seen){seen=true;track("rsvp_start")}});
+  function show(m,focus){err.textContent=m;err.hidden=false;if(focus){focus.setAttribute("aria-invalid","true");focus.focus()}}
+  nm.addEventListener("input",function(){nm.removeAttribute("aria-invalid");err.hidden=true});
   f.addEventListener("submit",function(e){
     e.preventDefault(); err.hidden=true;
-    var name=$("#rn").value.trim(), st=$('input[name=st]:checked',f).value, gc=$("#gc")?+$("#gc").value:1;
+    var name=nm.value.replace(/\s+/g," ").trim(), st=$('input[name=st]:checked',f).value, gc=$("#gc")?+$("#gc").value:1;
     if($("#hp").value) return;
-    if(name.length<2) return show("يرجى كتابة الاسم (حرفان على الأقل).");
+    if(name.length<2||name.length>80) return show("يرجى كتابة الاسم (بين حرفين و٨٠ حرفًا).",nm);
+    if(/[<>]/.test(name)) return show("يرجى كتابة الاسم بدون رموز خاصة.",nm);
     if(Date.now()-t0<2500) return show("لحظة من فضلكم ثم أعيدوا المحاولة.");
     if(Date.now()-last<8000) return show("تم الإرسال للتو، انتظروا قليلًا.");
-    function done(){ try{localStorage.setItem("rsvp_t",String(Date.now()))}catch(e){}
-      f.outerHTML='<div class="card form"><div class="ok"><div class="tick">'+ic("check",32)+'</div><h3 class="disp" style="font-size:1.6rem">'+esc(name)+'</h3><p style="margin-top:.5rem">'+esc(st==="attending"?r.successAttending:r.successDeclined)+'</p></div></div>'; }
+    var guests=st==="attending"?(r.collectCount?gc:1):0, hasDb=!!(sb.url&&sb.anonKey), hasMail=!!r.emailEndpoint, hasWa=!!r.whatsapp;
+    if(!hasDb&&!hasMail&&!hasWa) return show("خدمة تأكيد الحضور لم تُفعَّل بعد.");
+    function done(ch){ try{localStorage.setItem("rsvp_t",String(Date.now()))}catch(e){}
+      track("rsvp_success",{status:st,guests:guests,channel:ch});
+      f.outerHTML='<div class="card form" role="status"><div class="ok"><div class="tick">'+ic("check",32)+'</div><h3 class="disp" style="font-size:1.6rem">'+esc(name)+'</h3><p style="margin-top:.5rem">'+esc(st==="attending"?r.successAttending:r.successDeclined)+'</p></div></div>'; }
     var msg="السلام عليكم، أنا "+name+"، "+(st==="attending"?"أؤكد حضوري":"أعتذر عن الحضور")+" لـ"+C.forumTitle+" في "+C.school+(r.collectCount&&st==="attending"?"، عدد الحضور: "+gc:"")+".";
-    if(r.supabase&&r.supabase.url&&r.supabase.anonKey){
-      btn.disabled=true;btn.textContent="جارٍ الإرسال…";
-      fetch(r.supabase.url.replace(/\/$/,"")+"/rest/v1/rsvps",{method:"POST",headers:(function(){var h={"Content-Type":"application/json",apikey:r.supabase.anonKey,Prefer:"return=minimal"};if(r.supabase.anonKey.indexOf("sb_")!==0)h.Authorization="Bearer "+r.supabase.anonKey;return h})(),
-        body:JSON.stringify({name:name.slice(0,80),status:st,guests:st==="attending"?(r.collectCount?gc:1):0})})
-      .then(function(x){ if(!x.ok) throw 0; done()}).catch(function(){btn.disabled=false;btn.textContent="إرسال";show("تعذّر الإرسال حاليًا. حاولوا لاحقًا.")});
-    } else if(r.whatsapp){
-      window.open("https://wa.me/"+String(r.whatsapp).replace(/\D/g,"")+"?text="+encodeURIComponent(msg),"_blank"); done();
-    } else show("خدمة تأكيد الحضور لم تُفعَّل بعد.");
+    track("rsvp_submit",{status:st,guests:guests});
+    if(!hasDb&&!hasMail){ window.open("https://wa.me/"+String(r.whatsapp).replace(/\D/g,"")+"?text="+encodeURIComponent(msg),"_blank","noopener"); return done("whatsapp") }
+    btn.disabled=true;btn.textContent="جارٍ الإرسال…";
+    var jobs=[];
+    if(hasDb) jobs.push(fetch(sb.url.replace(/\/$/,"")+"/rest/v1/rsvps",{method:"POST",headers:(function(){var h={"Content-Type":"application/json",apikey:sb.anonKey,Prefer:"return=minimal"};if(sb.anonKey.indexOf("sb_")!==0)h.Authorization="Bearer "+sb.anonKey;return h})(),body:JSON.stringify({name:name,status:st,guests:guests})}).then(function(x){return x.ok}).catch(function(){return false}));
+    if(hasMail) jobs.push(fetch(r.emailEndpoint,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({name:name,status:st==="attending"?"سيحضر":"معتذر",guests:guests,message:msg,event:C.forumTitle,_subject:"تأكيد حضور جديد: "+name})}).then(function(x){return x.ok}).catch(function(){return false}));
+    Promise.all(jobs).then(function(res){ if(res.some(Boolean)) done(hasDb?"database":"email"); else {btn.disabled=false;btn.textContent="إرسال";track("rsvp_error");show("تعذّر الإرسال حاليًا. حاولوا لاحقًا.")} });
+  });
+}
+function jsonLd(){
+  if(!EV) return; var L=C.location,iso=function(ms){return new Date(ms+4*36e5).toISOString().slice(0,19)+"+04:00"};
+  var o={"@context":"https://schema.org","@type":"Event","name":C.forumTitle+" – "+C.school,"description":C.welcome,"startDate":iso(EV.start),"endDate":iso(EV.end),
+    "eventStatus":"https://schema.org/EventScheduled","eventAttendanceMode":"https://schema.org/OfflineEventAttendanceMode","inLanguage":"ar","isAccessibleForFree":true,
+    "url":siteLink(),"image":[new URL("og.png",siteLink()).href],
+    "location":{"@type":"Place","name":L.name,"address":{"@type":"PostalAddress","addressLocality":L.wilayat,"addressRegion":L.governorate,"addressCountry":"OM"}},
+    "organizer":{"@type":"EducationalOrganization","name":C.school,"url":siteLink()}};
+  if(L.lat&&L.lng) o.location.geo={"@type":"GeoCoordinates","latitude":+L.lat,"longitude":+L.lng};
+  var s=document.getElementById("ld")||document.createElement("script"); s.type="application/ld+json"; s.id="ld"; s.textContent=JSON.stringify(o); document.head.appendChild(s);
+  var when=fmtDate(EV.start)+(EV.hasTime?" · "+fmtTime(EV.start)+(C.event.endTime?" – "+fmtTime(EV.end):""):"");
+  [["meta[name=description]",C.forumTitle+" – "+C.school+" | "+when],["meta[property='og:description']",C.forumTitle+" – "+when]].forEach(function(x){var m=$(x[0]);if(m)m.setAttribute("content",x[1])});
+}
+/* توهج يدور حول دائرة الشعار: GSAP، ويتوقف خارج الشاشة، ويثبت مع تقليل الحركة */
+function setupOrbit(root){
+  $$(".orbit",root).forEach(function(o){
+    if(reduce){o.classList.remove("css");o.style.animation="none";return}
+    if(!window.gsap) return;
+    o.classList.remove("css");
+    var t=gsap.to(o,{rotation:360,duration:9,ease:"none",repeat:-1,transformOrigin:"50% 50%"});
+    var p=gsap.to($("i",o),{scale:1.35,duration:1.1,ease:"sine.inOut",yoyo:true,repeat:-1});
+    if("IntersectionObserver" in window) new IntersectionObserver(function(en){var on=en[0].isIntersecting;on?(t.resume(),p.resume()):(t.pause(),p.pause())}).observe(o.parentNode);
   });
 }
 function setupShare(){
   var wa=$("#shwa"); if(!wa) return; var txt=C.share.text+"\n"+siteLink();
-  wa.href="https://wa.me/?text="+encodeURIComponent(txt);
-  $("#shcp").addEventListener("click",function(){var b=this;copyText(siteLink()).then(function(){b.lastChild.textContent=" تم النسخ ✓";setTimeout(function(){b.lastChild.textContent=" نسخ الرابط"},1800)})});
+  wa.href="https://wa.me/?text="+encodeURIComponent(txt);wa.addEventListener("click",function(){track("share",{via:"whatsapp"})});
+  $("#shcp").addEventListener("click",function(){var b=this;track("share",{via:"copy"});copyText(siteLink()).then(function(){b.lastChild.textContent=" تم النسخ ✓";setTimeout(function(){b.lastChild.textContent=" نسخ الرابط"},1800)})});
   if(navigator.share){var n=$("#shnv");n.hidden=false;n.addEventListener("click",function(){navigator.share({title:C.forumTitle,text:C.share.text,url:siteLink()}).catch(function(){})})}
 }
 function setupCert(){
@@ -297,7 +338,9 @@ function runIntro(){
   var started=false,closed=false;
   function close(){ if(closed) return; closed=true; I.remove(); document.documentElement.classList.remove("lock"); if(lenis) lenis.resize(); if(window.ScrollTrigger) ScrollTrigger.refresh(); window.scrollTo(0,0); $$("#hero .rv").forEach(function(e,i){e.style.setProperty("--rvb",i*.07+"s")}) }
   var nm=$("#inp"); function saveName(){ if(nm&&nm.value.trim()){guestName=nm.value.trim().slice(0,40); var rn=$("#rn"); if(rn&&!rn.value) rn.value=guestName; var cn=$("#cn"); if(cn&&!cn.value) cn.value=guestName; var gh=$("#hero .gold.rv"); } }
-  particles($("#ip"),50,"222,196,98");
+  particles($("#ip"),50,"222,196,98"); setupOrbit(I);
+  var op=$("#open"); if(op) setTimeout(function(){try{op.focus({preventScroll:true})}catch(e){}},1900);
+  document.addEventListener("keydown",function esc(e){if(e.key==="Escape"&&document.getElementById("intro")){document.removeEventListener("keydown",esc);saveName();started=true;close()}});
   var showAll=function(){["isc","ititle","iline","inm","open"].forEach(function(id){var e=$("#"+id);if(e)e.style.opacity=1}); $("#ring").style.strokeDashoffset=0};
   if(window.gsap&&!reduce){
     var tl=gsap.timeline(); tl.from("#ilg",{scale:.7,opacity:0,duration:.9,ease:"back.out(1.6)"}).to("#ring",{strokeDashoffset:0,duration:1.4,ease:"power2.inOut"},"<.1")
@@ -322,14 +365,14 @@ function boot(){
   var fav=$('link[rel=icon]'); if(fav) fav.href=IMG.school;
   if(C.maintenance){ app.innerHTML='<div class="maint"><div>'+logosHtml()+'<h1 class="disp">'+esc(C.maintenanceMessage)+'</h1></div></div>'; return }
   var after=ended(), order;
-  var S={audio:sAudio,voices:sVoices,letter:sLetter,goals:sGoals,event:sEvent,program:sProgram,location:sLocation,rsvp:sRsvp,teachers:sTeachers,gallery:sGallery,share:sShare,after:sAfter};
-  order=["audio","voices","letter","goals","event","program","location","rsvp","teachers","gallery","share"];
+  var S={audio:sAudio,voices:sVoices,letter:sLetter,goals:sGoals,event:sEvent,location:sLocation,rsvp:sRsvp,teachers:sTeachers,gallery:sGallery,share:sShare,after:sAfter};
+  order=["audio","voices","letter","goals","event","location","rsvp","teachers","gallery","share"];
   if(after){ order=order.filter(function(k){return k!=="rsvp"}); order.unshift("after"); } else order.push("after");
-  var html=sHero()+order.filter(function(k){return k!=="after"||after}).map(function(k,i){ return (k==="goals"?sQuote():"")+S[k]() }).join("")+sFooter();
+  var html='<a class="skip" href="#main">تخطّي إلى المحتوى</a>'+sHero()+'<main id="main" tabindex="-1">'+order.filter(function(k){return k!=="after"||after}).map(function(k,i){ return (k==="goals"?sQuote():"")+S[k]() }).join("")+'</main>'+sFooter();
   app.innerHTML=html+(C.effects.intro&&!qs.get("skip")?sIntro():"");
-  setupAudio();setupCountdown();setupCalendar();setupRsvp();setupShare();setupCert();setupSpot();setupRipple();
+  jsonLd();track("view_invite");setupAudio();setupCountdown();setupCalendar();setupRsvp();setupShare();setupCert();setupSpot();setupRipple();
   if(C.effects.particles) particles($("#hp"),45,"222,196,98");
-  setupScroll();setupReveal();setupParallax();
+  setupScroll();setupReveal();setupParallax();setupOrbit(document);
   var rp=$("#replay"); if(rp) rp.addEventListener("click",function(){ app.insertAdjacentHTML("beforeend",sIntro()); runIntro(); });
   if(C.effects.intro&&!qs.get("skip")) runIntro(); else if(window.ScrollTrigger) setTimeout(function(){ScrollTrigger.refresh()},300);
 }

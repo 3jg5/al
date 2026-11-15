@@ -47,6 +47,7 @@ main{max-width:64rem}pre{background:#0d1f19;color:#d6efe4;padding:.8rem;border-r
 var $=function(s){return document.querySelector(s)};
 var base=JSON.parse(JSON.stringify(CONFIG)), cfg=base;
 try{var d=localStorage.getItem("draft_cfg"); if(d) cfg=JSON.parse(d)}catch(e){}
+delete cfg.program; delete base.program;
 function get(p){return p.split(".").reduce(function(o,k){return o==null?o:o[k]},cfg)}
 function set(p,v){var a=p.split("."),o=cfg;for(var i=0;i<a.length-1;i++)o=o[a[i]];o[a[a.length-1]]=v;save()}
 function save(){try{localStorage.setItem("draft_cfg",JSON.stringify(cfg))}catch(e){msg("المسودة كبيرة ولم تُحفظ في المتصفح (الصور). انشروا الآن.",0)}}
@@ -83,7 +84,7 @@ function list(box,p,defs,blank,imgKey){
     var a=el('<button class="p">＋ إضافة</button>');a.onclick=function(){get(p).push(JSON.parse(JSON.stringify(blank)));save();draw()};box.appendChild(a)}
   draw();
 }
-var GR={R1:["cr","١) الموعد والبيانات العامة"],R2:["cr","٢) الرسالة والصوت"],R3:["cr","٣) الأهداف والبرنامج"],L1:["cl","٤) الموقع"],L2:["cl","٥) المعلمون والصور والأصوات"],L3:["cl","٦) الحضور والمشاركة والنشر"]},GE={};
+var GR={R1:["cr","١) الموعد والبيانات العامة"],R2:["cr","٢) الرسالة والصوت"],R3:["cr","٣) الأهداف والعبارات"],L1:["cl","٤) الموقع"],L2:["cl","٥) المعلمون والصور والأصوات"],L3:["cl","٦) الحضور والمشاركة والنشر"]},GE={};
 ["R1","R2","R3","L1","L2","L3"].forEach(function(g){var c=el('<div class="grp"><h3>'+GR[g][1]+"</h3></div>");$("#"+GR[g][0]).appendChild(c);GE[g]=c});
 function sec(title,build,g){if(!GE[g]){var c=el('<div class="grp"><h3>'+GR[g][1]+'</h3></div>');$("#"+GR[g][0]).appendChild(c);GE[g]=c}var d=el("<details><summary>"+title+"</summary><div class='in'></div></details>");build(d.lastChild);GE[g].appendChild(d)}
 function rowOf(a){var r=el('<div class="row"></div>');a.forEach(function(x){r.appendChild(x)});return r}
@@ -103,7 +104,6 @@ sec("🎙 الكلمة الصوتية",function(b){
   b.appendChild(field("audio.enabled","عرض القسم","bool"));b.appendChild(field("audio.file","اسم ملف الصوت","text","ارفعوا ملف الصوت على GitHub بجانب index.html (لا يمكن رفعه من هنا)، ثم اكتبوا اسمه مثل voice.mp3"));
   b.appendChild(field("audio.title","العنوان"));b.appendChild(field("audio.transcript","نص الكلمة","area"))},"R2");
 sec("🎯 الأهداف",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"goals",[["title","العنوان"],["text","الوصف","area"]],{icon:"star",title:"",text:""})},"R3");
-sec("🕒 البرنامج",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"program",[["time","الوقت (مثال: ٥:٣٠ م)"],["title","العنوان"],["text","وصف (اختياري)"]],{time:"",title:"",text:""})},"R3");
 sec("📍 الموقع",function(b){
   b.appendChild(field("location.name","اسم المكان"));b.appendChild(field("location.address","العنوان التفصيلي"));
   b.appendChild(rowOf([field("location.wilayat","الولاية"),field("location.governorate","المحافظة")]));
@@ -111,13 +111,13 @@ sec("📍 الموقع",function(b){
   b.appendChild(field("location.tips","نصائح للوصول (سطر لكل نصيحة)","lines"))},"L1");
 sec("✅ تأكيد الحضور",function(b){
   b.appendChild(field("rsvp.enabled","تفعيل القسم","bool"));b.appendChild(field("rsvp.whatsapp","رقم واتساب لاستقبال الردود","text","بصيغة دولية بدون +، مثل 96899123456"));
-  b.appendChild(field("rsvp.collectCount","سؤال عن عدد الحضور","bool"));b.appendChild(field("rsvp.description","وصف القسم","area"));
+  b.appendChild(field("rsvp.collectCount","سؤال عن عدد الحضور","bool"));b.appendChild(field("rsvp.emailEndpoint","رابط إرسال نسخة بالبريد (Formspree)","text","اختياري: رابط من formspree.io يرسل كل رد إلى بريد الإدارة"));b.appendChild(field("analytics","إرسال أحداث التحليلات (حضور، صوت، مشاركة)","bool"));b.appendChild(field("rsvp.description","وصف القسم","area"));
   b.appendChild(el('<div class="hint">اختياري (قاعدة بيانات Supabase):</div>'));b.appendChild(field("rsvp.supabase.url","Supabase URL"));b.appendChild(field("rsvp.supabase.anonKey","Supabase anon key"))},"L3");
 sec("👨‍🏫 المعلمون",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"teachers.items",[["name","الاسم"],["role","المادة/الدور"],["text","نبذة","area"]],{name:"",role:"",text:"",photo:""},"photo")},"L2");
 sec("🖼 معرض الصور",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"gallery.photos",[["caption","وصف الصورة"]],{file:"",caption:""},"file");
   b.appendChild(el('<div class="hint">الصور تُحفظ داخل الإعدادات؛ استخدموا حتى ١٠ صور لتبقى الصفحة سريعة.</div>'))},"L2");
 sec("🗣 أصوات الطلبة",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"voices.items",[["name","اسم الطالب"],["file","اسم ملف الصوت (يُرفع على GitHub)"]],{name:"",file:""})},"L2");
-sec("💬 عبارات اليوم",function(b){b.appendChild(field("quotes","عبارة في كل سطر","lines"))},"L3");
+sec("💬 عبارات اليوم",function(b){b.appendChild(field("quotes","عبارة في كل سطر","lines"))},"R3");
 sec("📤 المشاركة",function(b){b.appendChild(field("share.enabled","عرض القسم","bool"));b.appendChild(field("share.title","العنوان"));b.appendChild(field("share.text","نص الرسالة","area"))},"L3");
 sec("🎓 ما بعد الملتقى",function(b){
   b.appendChild(field("after.message","رسالة الشكر","area"));b.appendChild(field("after.recommendations","أبرز التوصيات (سطر لكل توصية)","lines"));
