@@ -1,5 +1,5 @@
 /* عامل خدمة: يجعل الزيارات المتكررة شبه فورية. index/config: الشبكة أولًا (مهلة 1.5ث ثم النسخة المخزنة)، والباقي: المخزن أولًا مع تحديث بالخلفية */
-var C="farooq-v1";
+var C="farooq-v2";
 self.addEventListener("install",function(){self.skipWaiting()});
 self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==C}).map(function(x){return caches.delete(x)}))}).then(function(){return self.clients.claim()}))});
 self.addEventListener("fetch",function(e){

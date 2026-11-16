@@ -6,7 +6,7 @@
 | الموعد | الخميس 19/11/2026، 10:30 ص – 1:00 م بتوقيت مسقط (UTC+4) في config.js، ويظهر في الصفحة والعد التنازلي وmeta وJSON-LD (schema.org/Event) وملف التقويم (.ics، مع SEQUENCE:2 وUID ثابت ليتحدث الحدث لمن أضافه سابقًا) وتقويم جوجل |
 | قسم البرنامج | حُذف بالكامل من الصفحة وconfig.js والأدمن وCSS، ولا بيانات يتيمة (الأدمن يمسح المفتاح القديم من المسودات) |
 | الصوت | voice.mp3 (64kbps، 34 ثانية، 272KB من WAV أصلي 3.2MB). `preload="metadata"`، `<source type="audio/mpeg">`، أزرار تشغيل/كتم/سرعة بأسماء مقروءة، شريط تقدم بلوحة المفاتيح، رسالة بديلة + رابط تحميل عند الفشل، لا تشغيل تلقائي أبدًا |
-| الدائرة والتوهج | توهج يدور حول دائرة الشعار (GSAP، مع بديل CSS إن تعذّر تحميله)، يتوقف خارج الشاشة، ويثبت مع تقليل الحركة. رُفعت الدائرة لتلامس اسم المدرسة في الافتتاحية والصفحة الرئيسية |
+| الدائرة والتوهج | توهج يدور حول دائرة الشعار بـ CSS فقط (بلا مكتبات)، يتوقف خارج الشاشة، ويثبت مع تقليل الحركة. **جديد:** الافتتاحية تعمل في الوضع الأفقي (الشعار وزر «افتح دعوتك» ظاهران دائمًا)، والشعارات تُعرض WebP مع PNG احتياطي لآيفون القديم، وبدائل لـ gap وpadding-block وclamp للمتصفحات القديمة. رُفعت الدائرة لتلامس اسم المدرسة في الافتتاحية والصفحة الرئيسية |
 | الأداء | شعارات WebP (≈107KB بدل ≈210KB PNG)، CSS الحرج مضمَّن، باقي CSS والخطوط بلا حجب للعرض، كل السكربتات defer، أبعاد صريحة للصور، lazy للصور السفلية، خطوط 400/500/700 فقط، بصمة ?v= للملفات، vercel.json لرؤوس التخزين المؤقت والأمان (CDN وHTTP/2/3 وbrotli يوفرها Vercel تلقائيًا) |
 | الجوال | clamp() للخطوط، لا تمرير أفقي من 320 إلى 1440px، أهداف لمس ≥ 44px، ورُفع إصلاح تمرير أفقي كان سببه حقل الحماية المخفي في RTL |
 | الإتاحة | رابط تخطّي، landmark `main`، Esc لتخطي الافتتاحية، حوار modal، aria للمنزلق والحالة، تباين عالٍ، focus ظاهر |
@@ -14,7 +14,7 @@
 | التحليلات | `rsvp_start / rsvp_submit / rsvp_success / rsvp_error / view_invite / audio_play / audio_complete / add_to_calendar / share` تُدفع إلى dataLayer وgtag وPlausible إن وُجدت |
 
 ## النشر
-1. ارفعوا كل الملفات في جذر المستودع (استبدال القديمة): index.html, app.js, config.js, style.css, admin.html, vercel.json, voice.mp3, farooq-logo.webp, farooq-logo-light.webp, moe-logo.webp, oman-2040.webp, farooq-logo.png, og.png.
+1. ارفعوا كل الملفات في جذر المستودع (استبدال القديمة): index.html, app.js, config.js, style.css, admin.html, vercel.json, voice.mp3, farooq-logo.webp, farooq-logo-light.webp, moe-logo.webp, oman-2040.webp, farooq-logo.png, og.png، **وجديد:** farooq-logo-light.png, moe-logo.png, oman-2040.png (احتياطي PNG). لا ترفعوا مجلدَي tests وtools؛ هما للمطوّر فقط (يتجاهلهما .vercelignore). التفاصيل والاختبارات في QA.md.
 2. Vercel يعيد النشر تلقائيًا. كل فرع/Pull Request يحصل على رابط معاينة (Preview) = الـ staging.
 3. بعد معرفة الرابط: غيّروا og:image في index.html إلى رابط كامل.
 
