@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>لوحة إحصائيات الملتقى</title>
+<style>
+:root{--g:#b8893a;--d:#14301f}*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f6f3ec;color:#1d1d1d}
+header{background:var(--d);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}h1{font-size:1.1rem;margin:0}
+main{max-width:1000px;margin:auto;padding:14px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.k{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 5px #0001}.k b{display:block;font-size:1.8rem;color:var(--d)}
+.box{background:#fff;border-radius:12px;padding:14px;margin-top:12px;overflow-x:auto;box-shadow:0 1px 5px #0001}table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:8px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap}th{background:#faf6ec}
+button,input{font:inherit;padding:10px 14px;border-radius:8px;border:1.5px solid #bbb}button{background:var(--g);color:#fff;border:0;cursor:pointer}.bar{background:#eee;border-radius:6px;height:10px;min-width:90px}.bar i{display:block;height:100%;background:var(--g);border-radius:6px}
+#login{max-width:340px;margin:60px auto;background:#fff;padding:20px;border-radius:12px}#login input{width:100%;margin:6px 0}.err{color:#b3261e}[hidden]{display:none!important}
+</style></head><body>
+<div id="login"><h1>دخول الإدارة</h1><input id="em" type="email" placeholder="البريد" dir="ltr" autocomplete="username"><input id="pw" type="password" placeholder="كلمة المرور" dir="ltr" autocomplete="current-password"><button id="in" style="width:100%">دخول</button><p class="err" id="le" role="alert"></p></div>
+<div id="app" hidden><header><h1>لوحة إحصائيات ملتقى أولياء الأمور</h1><div><button id="xl">⬇ تصدير Excel</button> <button id="out" style="background:#555">خروج</button></div></header>
+<main><div class="cards" id="cards"></div>
+<div class="box"><b>حسب الصف</b><table id="tg"></table></div>
+<div class="box"><b>حسب الشعبة</b><table id="ts"></table></div>
+<div class="box"><b>التسجيلات</b> <input id="f" placeholder="بحث بالاسم أو الهاتف" style="margin-right:8px"><table id="tr"></table></div></main></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+firebase.initializeApp(FB_CONFIG);const au=firebase.auth(),db=firebase.firestore(),$=i=>document.getElementById(i);
+let R=[],M={counts:{},total:0};
+$('in').onclick=()=>au.signInWithEmailAndPassword($('em').value,$('pw').value).catch(()=>$('le').textContent='بيانات الدخول غير صحيحة');
+$('out').onclick=()=>au.signOut();
+au.onAuthStateChanged(async u=>{$('login').hidden=!!u;$('app').hidden=!u;if(!u)return;
+ try{const[s,m]=await Promise.all([db.collection('registrations').orderBy('updatedAt','desc').get(),db.doc('meta/sections').get()]);
+  R=s.docs.map(d=>d.data());M=m.data()||M;draw()}catch(e){$('app').hidden=true;$('login').hidden=false;$('le').textContent='هذا الحساب ليس مدرجًا ضمن المشرفين.';au.signOut()}});
+const T=h=>'<tr>'+h.map(x=>'<th>'+x+'</th>').join('')+'</tr>',pc=(a,b)=>b?Math.round(a/b*100):0;
+const dt=r=>r.updatedAt?r.updatedAt.toDate().toLocaleString('ar-OM'):'';
+function stats(){const g={},s={};for(const k in M.counts){const[a]=k.split('-');g[a]=g[a]||{t:0,y:0,n:0};g[a].t+=M.counts[k];s[k]={t:M.counts[k],y:0,n:0}}
+ R.forEach(r=>{const k=r.grade+'-'+r.section,f=r.attending?'y':'n';(g[r.grade]=g[r.grade]||{t:0,y:0,n:0})[f]++;(s[k]=s[k]||{t:0,y:0,n:0})[f]++});return{g,s}}
+function draw(){const y=R.filter(r=>r.attending).length,n=R.length-y,{g,s}=stats();
+ $('cards').innerHTML=[['إجمالي الطلبة',M.total],['تم الرد',R.length+' ('+pc(R.length,M.total)+'%)'],['سيحضرون',y],['معتذرون',n],['لم يردّوا',Math.max(M.total-R.length,0)]].map(([a,b])=>'<div class="k"><b>'+b+'</b>'+a+'</div>').join('');
+ const row=(l,x)=>'<tr><td>'+l+'</td><td>'+x.t+'</td><td>'+x.y+'</td><td>'+x.n+'</td><td>'+(x.t-x.y-x.n)+'</td><td><div class="bar"><i style="width:'+pc(x.y+x.n,x.t)+'%"></i></div> '+pc(x.y+x.n,x.t)+'%</td></tr>';
+ const H=['','الطلبة','سيحضر','يعتذر','لم يردّ','نسبة الرد'];
+ $('tg').innerHTML=T(H)+Object.keys(g).sort().map(k=>row('الصف '+k,g[k])).join('');
+ $('ts').innerHTML=T(H)+Object.keys(s).sort((a,b)=>a.replace('-','.')-b.replace('-','.')).map(k=>row('الصف '+k.split('-')[0]+' / شعبة '+k.split('-')[1],s[k])).join('');
+ list()}
+function list(){const q=$('f').value.trim();$('tr').innerHTML=T(['الطالب','الصف','الشعبة','ولي الأمر','الهاتف','القرار','آخر تحديث'])+
+ R.filter(r=>!q||(r.studentName+r.parentName+r.phone).includes(q)).slice(0,300).map(r=>{const tr=document.createElement('tr');
+ [r.studentName,r.grade,r.section,r.parentName,r.phone,r.attending?'سيحضر':'يعتذر',dt(r)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});return tr.outerHTML}).join('')}
+$('f').oninput=list;
+$('xl').onclick=()=>{const{g,s}=stats(),wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
+ const add=(n,a)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(a),n);
+ add('التسجيلات',R.map(r=>({'الطالب':r.studentName,'الصف':r.grade,'الشعبة':r.section,'الرقم المدرسي':r.sid,'ولي الأمر':r.parentName,'الهاتف':r.phone,'القرار':r.attending?'سيحضر':'يعتذر','آخر تحديث':dt(r)})));
+ const x=(l,o)=>({'البند':l,'الطلبة':o.t,'سيحضر':o.y,'يعتذر':o.n,'لم يردّ':o.t-o.y-o.n,'نسبة الرد %':pc(o.y+o.n,o.t)});
+ add('حسب الصف',Object.keys(g).sort().map(k=>x('الصف '+k,g[k])));add('حسب الشعبة',Object.keys(s).sort().map(k=>x('الصف '+k.replace('-',' / شعبة '),s[k])));
+ XLSX.writeFile(wb,'forum-registrations-'+new Date().toISOString().slice(0,10)+'.xlsx')};
+</script></body></html>
