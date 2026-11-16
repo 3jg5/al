@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>تأكيد الحضور | ملتقى أولياء الأمور</title>
+<title>تسجيل الحضور | ملتقى أولياء الأمور</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
@@ -30,7 +30,6 @@ body{
   padding-bottom:env(safe-area-inset-bottom);
   line-height:1.6;
 }
-/* ترويسة الصفحة الفخمة */
 header{
   position:relative;
   background:radial-gradient(circle at 50% 25%, var(--d2), var(--d) 75%);
@@ -54,7 +53,6 @@ header::before{
   max-width:560px;
   margin:0 auto;
 }
-/* شريط الشعارات */
 .logos-bar{
   display:grid;
   grid-template-columns:1fr auto 1fr;
@@ -118,7 +116,6 @@ header h1{
   .motto{font-size:1.05rem;padding:7px 14px}
 }
 
-/* المحتوى والبطاقات */
 main{max-width:560px;margin:-16px auto 0;padding:0 16px 24px;position:relative;z-index:2}
 .card{
   background:var(--c);
@@ -175,20 +172,6 @@ li button{
 }
 li button:hover{border-color:var(--g-dark);background:#fffdf7}
 .b{background:var(--d);color:var(--g);border-radius:8px;padding:3px 10px;font-size:.82rem;font-weight:700;white-space:nowrap}
-.pick{display:flex;gap:10px}
-.pick label{
-  flex:1;
-  margin:0;
-  border:2px solid #d5ddd9;
-  border-radius:10px;
-  padding:12px;
-  text-align:center;
-  font-weight:500;
-  cursor:pointer;
-  transition:.2s;
-}
-.pick input{width:auto;margin-left:6px}
-.pick label:has(input:checked){border-color:var(--ok);background:#e9f6ee;color:var(--ok);font-weight:700}
 .btn{
   width:100%;
   padding:14px;
@@ -208,15 +191,16 @@ li button:hover{border-color:var(--g-dark);background:#fffdf7}
 .btn.alt:hover{background:#f4f7f5}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .err{color:var(--e);font-size:.9rem;font-weight:500;min-height:1.2em;margin-top:8px}
-.ok{
+.ok-box{
   background:#e9f6ee;
   border:1.5px solid var(--ok);
   color:var(--ok);
-  padding:20px;
-  border-radius:14px;
+  padding:22px 18px;
+  border-radius:16px;
   font-weight:700;
   text-align:center;
   line-height:1.8;
+  box-shadow:0 4px 20px rgba(5,47,37,.07);
 }
 .hp{position:absolute;left:-9999px}
 dialog{border:0;border-radius:16px;max-width:420px;width:92%;padding:22px;box-shadow:0 12px 36px rgba(0,0,0,.25)}
@@ -247,7 +231,7 @@ dialog::backdrop{background:rgba(5,47,37,.6);backdrop-filter:blur(3px)}
       </div>
     </div>
     <p class="school-sub">مدرسة الفاروق للتعليم الأساسي للبنين</p>
-    <h1>ملتقى أولياء الأمور</h1>
+    <h1>تسجيل حضور أولياء الأمور</h1>
     <p class="motto">حضوركم يصنع الفرق... وبالتعاون معاً نصنع الأثر</p>
   </div>
 </header>
@@ -277,28 +261,29 @@ dialog::backdrop{background:rgba(5,47,37,.6);backdrop-filter:blur(3px)}
   <div class="sm">الطالب المختار</div>
   <div id="chosen" style="font-weight:700;font-size:1.05rem;color:var(--d);margin:4px 0"></div>
   <button type="button" class="btn alt" id="change" style="margin:6px 0 0;padding:8px;font-size:.92rem">تغيير الطالب</button>
+  
   <label for="pn">اسم ولي الأمر <span class="sm">(مقترح من اسم الأب، عدّلوه عند الحاجة)</span></label>
-  <input id="pn" maxlength="80" required autocomplete="name">
+  <input id="pn" maxlength="80" required autocomplete="off">
+  
   <label for="ph">رقم الهاتف (عُماني)</label>
-  <input id="ph" type="tel" inputmode="numeric" dir="ltr" style="text-align:right" placeholder="9xxxxxxx" required autocomplete="tel-national">
-  <label id="al">هل ستحضرون؟</label>
-  <div class="pick" role="radiogroup" aria-labelledby="al">
-    <label><input type="radio" name="a" value="1">سأحضر</label>
-    <label><input type="radio" name="a" value="0">أعتذر</label>
-  </div>
+  <input id="ph" type="tel" inputmode="numeric" dir="ltr" style="text-align:right" placeholder="9xxxxxxx" required autocomplete="off">
+  
   <input class="hp" name="website" id="hp" tabindex="-1" aria-hidden="true">
   <div class="err" id="e2" role="alert"></div>
-  <button class="btn" id="go">مراجعة وإرسال</button>
+  <button class="btn" id="go">مراجعة وتسجيل الحضور</button>
 </form>
 
-<div class="ok" id="done" role="status" hidden></div>
+<div class="ok-box" id="doneBox" role="status" hidden>
+  <div id="doneMsg" style="font-size:1.1rem"></div>
+  <button type="button" class="btn" id="nextParent" style="margin-top:16px">تسجيل ولي أمر آخر</button>
+</div>
 </main>
 
 <dialog id="dlg">
-  <h2 style="margin-top:0;color:var(--d);font-family:'Amiri',serif">تأكيد البيانات</h2>
+  <h2 style="margin-top:0;color:var(--d);font-family:'Amiri',serif">تأكيد تسجيل الحضور</h2>
   <div id="sum" style="line-height:1.9"></div>
   <div class="row" style="margin-top:16px">
-    <button class="btn" id="yes" style="margin:0">تأكيد</button>
+    <button class="btn" id="yes" style="margin:0">تأكيد الحضور</button>
     <button class="btn alt" id="no" style="margin:0">رجوع</button>
   </div>
 </dialog>
@@ -394,6 +379,8 @@ function pick(x) {
   sel = x;
   $('chosen').textContent = x.n + ' — الصف ' + x.g + ' / شعبة ' + x.s;
   $('pn').value = guess(x.n);
+  $('ph').value = '';
+  $('e2').textContent = '';
   $('find').hidden = true;
   $('form').hidden = false;
   $('ph').focus();
@@ -405,17 +392,32 @@ $('change').onclick = () => {
   $('q').focus();
 };
 
+// تهيئة الشاشة لولي الأمر التالي
+$('nextParent').onclick = () => {
+  sel = null;
+  $('q').value = '';
+  $('res1').innerHTML = '';
+  $('g').value = '';
+  $('s').innerHTML = '<option value="">اختر</option>';
+  $('s').disabled = true;
+  $('res2').innerHTML = '';
+  $('pn').value = '';
+  $('ph').value = '';
+  $('doneBox').hidden = true;
+  $('find').hidden = false;
+  $('q').focus();
+};
+
 const phone = () => $('ph').value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '').replace(/^(00)?968/, '');
 
 $('form').onsubmit = e => {
   e.preventDefault();
-  const pn = $('pn').value.trim(), a = document.querySelector('[name=a]:checked'), er = $('e2');
+  const pn = $('pn').value.trim(), er = $('e2');
   if (pn.length < 3) return er.textContent = 'اكتبوا اسم ولي الأمر.', $('pn').focus();
   if (!/^[79]\d{7}$/.test(phone())) return er.textContent = 'رقم الهاتف يجب أن يكون 8 أرقام تبدأ بـ 7 أو 9.', $('ph').focus();
-  if (!a) return er.textContent = 'اختاروا: سأحضر أو أعتذر.';
   er.textContent = '';
   $('sum').innerHTML = '';
-  [['الطالب', sel.n], ['ولي الأمر', pn], ['الهاتف', '+968 ' + phone()], ['القرار', a.value === '1' ? 'سأحضر' : 'أعتذر']].forEach(([k, v]) => {
+  [['الطالب', sel.n], ['الصف والشعبة', 'الصف ' + sel.g + ' / شعبة ' + sel.s], ['ولي الأمر', pn], ['الهاتف', '+968 ' + phone()], ['الحالة', 'حاضر (مؤكد)']].forEach(([k, v]) => {
     const d = document.createElement('div');
     d.textContent = k + ': ' + v;
     $('sum').appendChild(d);
@@ -425,43 +427,51 @@ $('form').onsubmit = e => {
 
 $('no').onclick = () => $('dlg').close();
 
+$('hp').value = '';
+
 $('yes').onclick = async () => {
-  if ($('hp').value) return;
   const b = $('yes');
   b.disabled = true;
+  b.textContent = 'جاري التسجيل...';
+  
   try {
-    const att = document.querySelector('[name=a]:checked').value === '1';
     const docRef = db.collection('registrations').doc(sel.sid);
     
-    await docRef.set({
-      sid: sel.sid,
-      studentName: sel.n,
-      grade: sel.g,
-      section: sel.s,
-      parentName: $('pn').value.trim().replace(/\s+/g, ' '),
-      phone: '968' + phone(),
-      attending: att,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('انتهت مهلة الاتصال بقاعدة البيانات')), 10000)
+    );
 
-    await db.collection('audit').add({
-      action: 'submit',
+    await Promise.race([
+      docRef.set({
+        sid: sel.sid,
+        studentName: sel.n,
+        grade: sel.g,
+        section: sel.s,
+        parentName: $('pn').value.trim().replace(/\s+/g, ' '),
+        phone: '968' + phone(),
+        attending: true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }),
+      timeout
+    ]);
+
+    db.collection('audit').add({
+      action: 'checkin',
       sid: sel.sid,
       ts: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    }).catch(() => {});
 
     $('dlg').close();
     $('form').hidden = true;
-    $('done').hidden = false;
-    $('done').textContent = att
-      ? 'شكرًا لكم، تم تسجيل تأكيد حضوركم. ننتظركم بكل ترحيب.'
-      : 'شكرًا لإبلاغنا، نقدّر ردكم ونتمنى لقاءكم في فرصة قادمة.';
+    $('doneBox').hidden = false;
+    $('doneMsg').textContent = 'أهلاً ومرحباً بكم في مدرسة الفاروق، تم تسجيل حضوركم بنجاح.';
   } catch (err) {
-    console.error(err);
+    console.error('Firestore Error:', err);
     $('dlg').close();
-    $('e2').textContent = 'حدث خطأ أثناء الإرسال، تأكدوا من الاتصال بالإنترنت وحاولوا مرة أخرى.';
+    $('e2').textContent = 'تعذّر الحفظ (' + (err.code || err.message) + ')، تأكد من تفعيل Firestore ونشر Rules.';
   } finally {
     b.disabled = false;
+    b.textContent = 'تأكيد الحضور';
   }
 };
 </script>
