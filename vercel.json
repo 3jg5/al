@@ -5,7 +5,7 @@
       { "key": "X-Content-Type-Options", "value": "nosniff" },
       { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
       { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" } ] },
-    { "source": "/(index.html|config.js|admin.html)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" } ] },
+    { "source": "/(index.html|config.js|admin.html|sw.js)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" } ] },
     { "source": "/(app.js|style.css)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" } ] },
     { "source": "/(.*)\\.(webp|png|mp3)", "headers": [ { "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" } ] },
     { "source": "/(.*)\\.mp3", "headers": [ { "key": "Content-Type", "value": "audio/mpeg" }, { "key": "Accept-Ranges", "value": "bytes" } ] },

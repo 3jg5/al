@@ -5,8 +5,12 @@ var DIM = { light: [360,438], moe: [160,160], vision: [224,140] };
 var C = CONFIG, $ = function(s,r){return (r||document).querySelector(s)}, $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 var qs = new URLSearchParams(location.search);
+var CONN = navigator.connection || {};
+var LOW = !!(CONN.saveData || /(^|-)2g$/.test(CONN.effectiveType||"") || (navigator.deviceMemory && navigator.deviceMemory<=2));
+function later(f){ if("requestIdleCallback" in window) requestIdleCallback(f,{timeout:2500}); else setTimeout(f,1200) }
+function loadScript(src,cb){var s=document.createElement("script");s.src=src;s.async=true;s.onload=function(){cb&&cb()};s.onerror=function(){};document.head.appendChild(s)}
 var guestName = (qs.get("n") || "").replace(/[<>]/g,"").slice(0,40);
-var AR = new Intl.NumberFormat("ar-OM-u-nu-arab", {useGrouping:false});
+var AR = new Intl.NumberFormat(["ar-OM-u-nu-arab","ar-u-nu-arab","ar"], {useGrouping:false});
 var nA = function(n){return AR.format(n)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function pass(a){return !!a}
@@ -47,8 +51,8 @@ function parseEv(){
   return {start:s,end:en||(s+36e5*2),hasTime:!!e.startTime,d:d};
 }
 var EV=parseEv();
-function fmtDate(ms){return new Intl.DateTimeFormat("ar-OM-u-nu-arab-ca-gregory",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"Asia/Muscat"}).format(new Date(ms))}
-function fmtTime(ms){return new Intl.DateTimeFormat("ar-OM-u-nu-arab",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Muscat"}).format(new Date(ms))}
+function fmtDate(ms){return new Intl.DateTimeFormat(["ar-OM-u-nu-arab-ca-gregory","ar-u-nu-arab-ca-gregory","ar"],{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"Asia/Muscat"}).format(new Date(ms))}
+function fmtTime(ms){return new Intl.DateTimeFormat(["ar-OM-u-nu-arab","ar-u-nu-arab","ar"],{hour:"numeric",minute:"2-digit",hour12:true,timeZone:"Asia/Muscat"}).format(new Date(ms))}
 function ended(){return EV && Date.now()>EV.end || qs.get("after")==="1"}
 
 /* ───── بناء الصفحة ───── */
@@ -91,7 +95,7 @@ function sAudio(){
   '<div class="pl" id="pl"><button class="btn b-gold pb" id="pbtn" aria-label="تشغيل الكلمة الصوتية">'+ic("play",26)+'</button><div style="flex:1;min-width:0"><div class="wave" id="wave" role="slider" aria-label="موضع التشغيل" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">'+Array.apply(null,Array(36)).map(function(_,i){return '<i style="height:'+(30+Math.abs(Math.sin(i*1.7))*70)+'%;--k:'+i+'"></i>'}).join("")+'</div><div class="tm"><span id="tc">٠:٠٠</span><span id="td">٠:٠٠</span></div></div>'+
   '<button class="btn-i" id="mut" aria-label="كتم الصوت" aria-pressed="false">'+ic("vol",20)+'</button><button class="btn-i" id="spd" aria-label="سرعة التشغيل: ١×">١×</button></div>'+
   '<p class="small" id="ast" role="status" aria-live="polite" style="margin-top:.75rem"></p>'+
-  '<audio id="au" preload="metadata"><source src="'+esc(a.file)+'" type="'+mimeOf(a.file)+'"></audio>'+
+  '<audio id="au" preload="none"><source src="'+esc(a.file)+'" type="'+mimeOf(a.file)+'"></audio>'+
   (a.transcript?'<details class="tx"><summary>اقرأ نص الكلمة</summary><p>'+esc(a.transcript)+'</p></details>':'')+'</div></div></section>';
 }
 function sVoices(){
@@ -110,8 +114,8 @@ function sEvent(){
   var body;
   if(!EV) body='<div class="card ev rv"><div style="padding:3rem 1.5rem;text-align:center"><div class="big">سيُعلن موعد الملتقى قريبًا</div><p style="margin-top:.75rem;color:rgb(var(--ink)/.7)">تابعوا الدعوة لمعرفة التفاصيل.</p></div></div>';
   else {
-    var dm=new Intl.DateTimeFormat("ar-OM-u-nu-arab-ca-gregory",{day:"numeric",timeZone:"Asia/Muscat"}).format(new Date(EV.start));
-    var mo=new Intl.DateTimeFormat("ar-OM-u-nu-arab-ca-gregory",{month:"long",year:"numeric",timeZone:"Asia/Muscat"}).format(new Date(EV.start));
+    var dm=new Intl.DateTimeFormat(["ar-OM-u-nu-arab-ca-gregory","ar-u-nu-arab-ca-gregory","ar"],{day:"numeric",timeZone:"Asia/Muscat"}).format(new Date(EV.start));
+    var mo=new Intl.DateTimeFormat(["ar-OM-u-nu-arab-ca-gregory","ar-u-nu-arab-ca-gregory","ar"],{month:"long",year:"numeric",timeZone:"Asia/Muscat"}).format(new Date(EV.start));
     body='<div class="card ev rv"><div class="evd"><div class="dbox"><div><div class="dn">'+dm+'</div><b>'+mo+'</b></div></div><div class="dinf"><div><small>اليوم والتاريخ</small><b>'+fmtDate(EV.start)+'</b></div>'+(EV.hasTime?'<div><small>الوقت</small><b>'+fmtTime(EV.start)+(C.event.endTime?" – "+fmtTime(EV.end):"")+'</b></div>':'')+'<div><small>المكان</small><b>'+esc(C.location.name)+'</b></div></div></div>'+
     (C.event.countdown?'<div class="cdw" id="cdw"><p style="text-align:center;margin-bottom:1rem;color:rgb(var(--ink)/.7)" id="cdt">المتبقي على الملتقى</p><div class="cd" id="cd"><div><b id="c-d">٠</b><span>يوم</span></div><div><b id="c-h">٠</b><span>ساعة</span></div><div><b id="c-m">٠</b><span>دقيقة</span></div><div><b id="c-s">٠</b><span>ثانية</span></div></div></div>':'')+
     '<div class="evb"><a class="btn b-gold" id="gcal" target="_blank" rel="noopener">'+ic("cal",20)+' أضِف إلى تقويم جوجل</a><button class="btn b-ghost" id="ics">'+ic("dl",20)+' تحميل ملف التقويم (iPhone)</button></div></div>';
@@ -133,7 +137,7 @@ function sRsvp(){
   var guests=r.collectCount?'<div id="gwrap"><label class="l" for="gc">عدد الحضور</label><select class="field" id="gc">'+Array.apply(null,Array(r.maxGuests)).map(function(_,i){return '<option value="'+(i+1)+'">'+nA(i+1)+'</option>'}).join("")+'</select></div>':'';
   return '<section class="s" id="rsvp" style="background:rgb(var(--bg2)/.5)"><div class="wrap">'+head("نتشرف بحضوركم",r.title,r.description)+
   '<form class="card form rv" id="rf" novalidate><div><label class="l" for="rn">الاسم الكريم</label><input class="field" id="rn" maxlength="80" autocomplete="name" required value="'+esc(guestName)+'"></div>'+
-  '<fieldset><legend>هل ستحضرون؟</legend><div class="opts"><label class="opt"><input type="radio" name="st" value="attending" checked>سأحضر بإذن الله</label><label class="opt"><input type="radio" name="st" value="declined">أعتذر عن الحضور</label></div></fieldset>'+guests+
+  '<fieldset><legend>هل ستحضرون؟</legend><div class="opts"><label class="opt"><input type="radio" name="st" value="attending" checked><span>سأحضر بإذن الله</span></label><label class="opt"><input type="radio" name="st" value="declined"><span>أعتذر عن الحضور</span></label></div></fieldset>'+guests+
   '<div class="sr" aria-hidden="true"><input id="hp" tabindex="-1" autocomplete="off"></div>'+
   '<div class="err" id="re" role="alert" hidden></div><button class="btn b-gold" type="submit" id="rb">إرسال</button><p class="small">'+(r.supabase.url?"يُحفظ ردكم لدى إدارة المدرسة فقط.":(r.whatsapp?"سيفتح واتساب برسالة جاهزة لإرسالها إلى إدارة المدرسة.":""))+'</p></form></div></section>';
 }
@@ -158,7 +162,7 @@ function sShare(){
 function sAfter(){
   var a=C.after;
   return '<section class="s" id="after"><div class="wrap">'+head("شكرًا لكم",a.title,a.message)+
-  (a.recommendations.length?'<div class="card letter rv" style="padding:1.5rem"><h3 class="gold disp" style="font-size:1.4rem;margin-bottom:.75rem">'+esc(a.recTitle)+'</h3><ul style="padding-inline-start:1.25rem">'+a.recommendations.map(function(x){return '<li style="margin-bottom:.5rem">'+esc(x)+'</li>'}).join("")+'</ul></div>':'')+
+  (a.recommendations.length?'<div class="card letter rv" style="padding:1.5rem"><h3 class="gold disp" style="font-size:1.4rem;margin-bottom:.75rem">'+esc(a.recTitle)+'</h3><ul style="padding-right:1.25rem">'+a.recommendations.map(function(x){return '<li style="margin-bottom:.5rem">'+esc(x)+'</li>'}).join("")+'</ul></div>':'')+
   '<div class="acts rv" style="margin:1.5rem auto 0;justify-content:center">'+(a.surveyUrl?'<a class="btn b-gold" target="_blank" rel="noopener" href="'+esc(a.surveyUrl)+'">شاركونا رأيكم</a>':'')+'</div>'+
   (a.certificate?'<div class="card form rv" style="margin-top:1.5rem"><h3 class="disp gold" style="font-size:1.5rem;text-align:center">'+esc(a.certTitle)+'</h3><div><label class="l" for="cn">اكتبوا اسمكم لتحصلوا على الشهادة</label><input class="field" id="cn" maxlength="60" value="'+esc(guestName)+'"></div><canvas id="cc" width="1600" height="1130" style="width:100%;height:auto;border-radius:1rem;display:none"></canvas><button class="btn b-gold" id="cb">إنشاء الشهادة</button><a class="btn b-ghost" id="cdl" download="شهادة-شكر.png" hidden>تحميل الشهادة</a></div>':'')+
   '</div></section>';
@@ -175,16 +179,17 @@ function sIntro(){
 }
 /* ───── أدوات ───── */
 function particles(cv,n,col){
-  if(!cv||reduce) return; var x=cv.getContext("2d"),W,H,P=[],run=true;
+  if(!cv||reduce||LOW) return; if(innerWidth<640) n=Math.round(n*.5);
+  var x=cv.getContext("2d"),W,H,P=[],vis=true;
   function rs(){var r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=cv.width=r.width*d;H=cv.height=r.height*d;}
   rs(); addEventListener("resize",rs);
+  if("IntersectionObserver" in window) new IntersectionObserver(function(en){vis=en[0].isIntersecting}).observe(cv);
   for(var i=0;i<n;i++)P.push({x:Math.random(),y:Math.random(),r:Math.random()*2+.6,v:Math.random()*.0004+.00012,a:Math.random()*.5+.15,p:Math.random()*6});
-  (function f(t){ if(!cv.isConnected) return; x.clearRect(0,0,W,H);
+  (function f(t){ if(!cv.isConnected) return; if(vis&&!document.hidden){ x.clearRect(0,0,W,H);
     P.forEach(function(p){p.y-=p.v*16; if(p.y<-.02){p.y=1.02;p.x=Math.random()} var o=p.a*(.6+.4*Math.sin(t/900+p.p));
-      x.beginPath();x.arc(p.x*W+Math.sin(t/1500+p.p)*12,p.y*H,p.r*(devicePixelRatio||1),0,7);x.fillStyle="rgba("+col+","+o+")";x.fill()});
+      x.beginPath();x.arc(p.x*W+Math.sin(t/1500+p.p)*12,p.y*H,p.r*(devicePixelRatio||1),0,7);x.fillStyle="rgba("+col+","+o+")";x.fill()}) }
     requestAnimationFrame(f)})(0);
 }
-var AC=null;
 function chime(){ if(!C.effects.chime) return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)();
   [523.25,659.25,783.99,1046.5].forEach(function(f,i){var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+i*.13;
     o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.08,t+.03);g.gain.exponentialRampToValueAtTime(.0001,t+1.4);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+1.5)})}catch(e){} }
@@ -222,7 +227,9 @@ function setupAudio(){
   var au=$("#au"); if(!au) return; var btn=$("#pbtn"),wave=$("#wave"),bars=$$("i",wave),tc=$("#tc"),td=$("#td"),sp=$("#spd"),mu=$("#mut"),st=$("#ast"),box=$("#pl"),rates=[1,1.25,1.5,.75],ri=0,fired=false;
   function f(s){s=Math.max(0,Math.floor(s||0));return nA(Math.floor(s/60))+":"+nA(s%60).padStart(2,"٠")}
   function upd(){var p=au.duration?au.currentTime/au.duration:0;bars.forEach(function(b,i){b.classList.toggle("on",i/bars.length<p)});tc.textContent=f(au.currentTime);if(au.duration)td.textContent=f(au.duration);wave.setAttribute("aria-valuenow",Math.round(p*100))}
-  btn.addEventListener("click",function(){ if(au.paused){ var pr=au.play(); if(pr&&pr.catch) pr.catch(function(){st.textContent="تعذّر التشغيل التلقائي؛ اضغطوا زر التشغيل مرة أخرى."}) } else au.pause()});
+  function warm(){ if(au.preload!=="metadata"){au.preload="metadata";try{au.load()}catch(e){}} }
+  if("IntersectionObserver" in window) new IntersectionObserver(function(en,ob){if(en[0].isIntersecting){warm();ob.disconnect()}},{rootMargin:"900px 0px"}).observe(box); else warm();
+  btn.addEventListener("click",function(){ warm(); if(au.paused){ var pr=au.play(); if(pr&&pr.catch) pr.catch(function(){st.textContent="تعذّر التشغيل التلقائي؛ اضغطوا زر التشغيل مرة أخرى."}) } else au.pause()});
   au.addEventListener("play",function(){btn.innerHTML=ic("pause",26);btn.setAttribute("aria-label","إيقاف مؤقت");box.classList.add("playing");st.textContent="";if(!fired){fired=true;track("audio_play")}});
   au.addEventListener("pause",function(){btn.innerHTML=ic("play",26);btn.setAttribute("aria-label","تشغيل الكلمة الصوتية");box.classList.remove("playing")});
   au.addEventListener("ended",function(){box.classList.remove("playing");track("audio_complete")});
@@ -300,14 +307,23 @@ function jsonLd(){
 }
 /* توهج يدور حول دائرة الشعار: GSAP، ويتوقف خارج الشاشة، ويثبت مع تقليل الحركة */
 function setupOrbit(root){
-  $$(".orbit",root).forEach(function(o){
-    if(reduce){o.classList.remove("css");o.style.animation="none";return}
-    if(!window.gsap) return;
+  if(reduce){ $$(".orbit",root).forEach(function(o){o.classList.remove("css");o.style.animation="none"}); return }
+  if(!window.gsap) return;
+  $$(".orbit.css",root).forEach(function(o){
     o.classList.remove("css");
     var t=gsap.to(o,{rotation:360,duration:9,ease:"none",repeat:-1,transformOrigin:"50% 50%"});
     var p=gsap.to($("i",o),{scale:1.35,duration:1.1,ease:"sine.inOut",yoyo:true,repeat:-1});
     if("IntersectionObserver" in window) new IntersectionObserver(function(en){var on=en[0].isIntersecting;on?(t.resume(),p.resume()):(t.pause(),p.pause())}).observe(o.parentNode);
   });
+}
+/* المكتبات الثقيلة تُحمَّل بعد ظهور الصفحة: GSAP للتوهج، وLenis وScrollTrigger للحاسوب فقط */
+function loadLibs(){
+  if(reduce||LOW) return;
+  var desk=window.matchMedia&&matchMedia("(pointer:fine) and (min-width:900px)").matches;
+  loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js",function(){
+    setupOrbit(document); if(!desk||!C.effects.smoothScroll) return;
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js",function(){
+      loadScript("https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js",function(){ setupScroll(); setupParallax() }) }) });
 }
 function setupShare(){
   var wa=$("#shwa"); if(!wa) return; var txt=C.share.text+"\n"+siteLink();
@@ -333,32 +349,38 @@ function setupCert(){
     im.src=IMG.light;
   });
 }
+function an(el,kf,o){ if(!el) return null; if(!el.animate){ var l=kf[kf.length-1]; for(var k in l) if(k!=="offset") el.style[k]=l[k]; return null } return el.animate(kf,Object.assign({fill:"forwards"},o)) }
+function done(a,f){ if(a&&a.finished) a.finished.then(f,f); else f() }
 function runIntro(){
   var I=$("#intro"); if(!I) return; document.documentElement.classList.add("lock");
-  var started=false,closed=false;
+  var started=false,closed=false,E="cubic-bezier(.2,.8,.2,1)";
   function close(){ if(closed) return; closed=true; I.remove(); document.documentElement.classList.remove("lock"); if(lenis) lenis.resize(); if(window.ScrollTrigger) ScrollTrigger.refresh(); window.scrollTo(0,0); $$("#hero .rv").forEach(function(e,i){e.style.setProperty("--rvb",i*.07+"s")}) }
-  var nm=$("#inp"); function saveName(){ if(nm&&nm.value.trim()){guestName=nm.value.trim().slice(0,40); var rn=$("#rn"); if(rn&&!rn.value) rn.value=guestName; var cn=$("#cn"); if(cn&&!cn.value) cn.value=guestName; var gh=$("#hero .gold.rv"); } }
+  var nm=$("#inp"); function saveName(){ if(nm&&nm.value.trim()){guestName=nm.value.trim().slice(0,40); var rn=$("#rn"); if(rn&&!rn.value) rn.value=guestName; var cn=$("#cn"); if(cn&&!cn.value) cn.value=guestName; } }
   particles($("#ip"),50,"222,196,98"); setupOrbit(I);
-  var op=$("#open"); if(op) setTimeout(function(){try{op.focus({preventScroll:true})}catch(e){}},1900);
+  var op=$("#open"); if(op) setTimeout(function(){try{op.focus({preventScroll:true})}catch(e){}},1700);
   document.addEventListener("keydown",function esc(e){if(e.key==="Escape"&&document.getElementById("intro")){document.removeEventListener("keydown",esc);saveName();started=true;close()}});
-  var showAll=function(){["isc","ititle","iline","inm","open"].forEach(function(id){var e=$("#"+id);if(e)e.style.opacity=1}); $("#ring").style.strokeDashoffset=0};
-  if(window.gsap&&!reduce){
-    var tl=gsap.timeline(); tl.from("#ilg",{scale:.7,opacity:0,duration:.9,ease:"back.out(1.6)"}).to("#ring",{strokeDashoffset:0,duration:1.4,ease:"power2.inOut"},"<.1")
-      .to("#isc",{opacity:1,y:0,duration:.6},"-=.6").fromTo("#ititle",{y:30,opacity:0},{y:0,opacity:1,duration:.8},"-=.3").to("#iline",{opacity:1,duration:.8},"-=.3").to(["#inm","#open"],{opacity:1,duration:.6,stagger:.15},"-=.3");
-  } else showAll();
+  if(reduce){ ["isc","ititle","iline","inm","open"].forEach(function(id){var e=$("#"+id);if(e)e.style.opacity=1}); $("#ring").style.strokeDashoffset=0 }
+  else {
+    an($("#ring"),[{strokeDashoffset:590},{strokeDashoffset:0}],{duration:1300,easing:"cubic-bezier(.65,0,.35,1)"});
+    [["isc",500],["ititle",750],["iline",1000],["inm",1200],["open",1300]].forEach(function(x){
+      an($("#"+x[0]),[{opacity:0,transform:"translateY(16px)"},{opacity:1,transform:"translateY(0)"}],{duration:650,delay:x[1],easing:E}) });
+  }
   function openDoors(){
     if(started) return; started=true; saveName(); chime();
-    if(!window.gsap||reduce){ I.style.transition="opacity .5s"; I.style.opacity=0; setTimeout(close,520); return }
-    var tl=gsap.timeline({onComplete:close});
-    tl.to("#icont",{opacity:0,scale:.92,duration:.5,ease:"power2.in"}).to("#seam",{opacity:1,duration:.25},"-=.1").to("#iglow",{opacity:1,duration:.6},"<")
-      .to("#dl",{xPercent:100,duration:1.5,ease:"power3.inOut"},"+=.05").to("#dr",{xPercent:-100,duration:1.5,ease:"power3.inOut"},"<")
-      .to("#seam",{opacity:0,duration:.6},"-=1.2").to("#intro",{opacity:0,duration:.5},"-=.4");
+    if(reduce){ I.style.opacity=0; setTimeout(close,50); return }
+    var D="cubic-bezier(.76,0,.24,1)";
+    an($("#icont"),[{opacity:1,transform:"scale(1)"},{opacity:0,transform:"scale(.92)"}],{duration:450,easing:"ease-in"});
+    an($("#seam"),[{opacity:0},{opacity:1}],{duration:250,delay:350});
+    an($("#iglow"),[{opacity:0},{opacity:1}],{duration:600,delay:400});
+    an($("#dl"),[{transform:"translateX(0)"},{transform:"translateX(100%)"}],{duration:1400,delay:550,easing:D});
+    an($("#dr"),[{transform:"translateX(0)"},{transform:"translateX(-100%)"}],{duration:1400,delay:550,easing:D});
+    an($("#seam"),[{opacity:1},{opacity:0}],{duration:500,delay:900});
+    done(an(I,[{opacity:1},{opacity:0}],{duration:450,delay:1750}),close);
   }
   $("#open").addEventListener("click",openDoors);
   $("#skip").addEventListener("click",function(){saveName();started=true;close()});
   if(nm) nm.addEventListener("keydown",function(e){if(e.key==="Enter")openDoors()});
 }
-
 /* ───── التشغيل ───── */
 function boot(){
   document.title=C.forumTitle+" | "+C.school;
@@ -372,9 +394,11 @@ function boot(){
   app.innerHTML=html+(C.effects.intro&&!qs.get("skip")?sIntro():"");
   jsonLd();track("view_invite");setupAudio();setupCountdown();setupCalendar();setupRsvp();setupShare();setupCert();setupSpot();setupRipple();
   if(C.effects.particles) particles($("#hp"),45,"222,196,98");
-  setupScroll();setupReveal();setupParallax();setupOrbit(document);
+  setupReveal();setupOrbit(document);
+  if(document.readyState==="complete") later(loadLibs); else addEventListener("load",function(){later(loadLibs)});
+  if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")) addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
   var rp=$("#replay"); if(rp) rp.addEventListener("click",function(){ app.insertAdjacentHTML("beforeend",sIntro()); runIntro(); });
-  if(C.effects.intro&&!qs.get("skip")) runIntro(); else if(window.ScrollTrigger) setTimeout(function(){ScrollTrigger.refresh()},300);
+  if(C.effects.intro&&!qs.get("skip")) runIntro(); 
 }
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 })();
