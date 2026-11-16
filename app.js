@@ -4,6 +4,7 @@ var DIM = { light: [360,438], moe: [160,160], vision: [224,140] };
 "use strict";
 var C = CONFIG, $ = function(s,r){return (r||document).querySelector(s)}, $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+var VOICE = null;
 var qs = new URLSearchParams(location.search);
 var CONN = navigator.connection || {};
 var LOW = !!(CONN.saveData || /(^|-)2g$/.test(CONN.effectiveType||"") || (navigator.deviceMemory && navigator.deviceMemory<=2));
@@ -239,7 +240,22 @@ function setupAudio(){
   wave.addEventListener("click",seek);
   wave.addEventListener("keydown",function(e){if(e.key==="ArrowLeft"){au.currentTime=Math.min(au.duration||0,au.currentTime+5);e.preventDefault()}if(e.key==="ArrowRight"){au.currentTime=Math.max(0,au.currentTime-5);e.preventDefault()}});
   sp.addEventListener("click",function(){ri=(ri+1)%rates.length;au.playbackRate=rates[ri];sp.textContent=nA(rates[ri])+"×";sp.setAttribute("aria-label","سرعة التشغيل: "+nA(rates[ri])+"×")});
-  mu.addEventListener("click",function(){au.muted=!au.muted;mu.setAttribute("aria-pressed",String(au.muted));mu.setAttribute("aria-label",au.muted?"إلغاء كتم الصوت":"كتم الصوت");mu.innerHTML=ic(au.muted?"mute":"vol",20)});
+  var touched=false;
+  function sync(){ var m=au.muted,p=!au.paused; mu.setAttribute("aria-pressed",String(m)); mu.setAttribute("aria-label",m?"إلغاء كتم الصوت":"كتم الصوت"); mu.innerHTML=ic(m?"mute":"vol",20);
+    var mi=$("#mini"); if(mi){ var on=p&&!m; mi.innerHTML=ic(on?"vol":"mute",20); mi.setAttribute("aria-label",on?"كتم الصوت":(p?"إلغاء كتم الصوت":"تشغيل الكلمة الصوتية")); mi.setAttribute("aria-pressed",String(!on)) } }
+  ["volumechange","play","pause","ended"].forEach(function(ev){au.addEventListener(ev,sync)});
+  mu.addEventListener("click",function(){touched=true;au.muted=!au.muted});
+  btn.addEventListener("click",function(){touched=true});
+  VOICE={ play:function(d){ if(C.audio.autoplay===false) return; warm(); var pr; try{pr=au.play()}catch(e){}
+    if(!d){ if(pr&&pr.catch) pr.catch(function(){}); return }
+    /* تأخير البدء ليُسمع الجرس أولًا: نفتح التشغيل بلمسة المستخدم ثم نوقفه فورًا ونبدأ بعد d مللي ثانية (يلزم لـ iOS) */
+    if(pr&&pr.then) pr.then(function(){au.pause();au.currentTime=0},function(){}); else {try{au.pause()}catch(e){}}
+    setTimeout(function(){ if(touched) return; var p2; try{p2=au.play()}catch(e){} if(p2&&p2.catch) p2.catch(function(){}) },d) } };
+  var mi=$("#mini"); if(mi) mi.addEventListener("click",function(){ touched=true; if(au.paused){au.muted=false;warm();var pr=au.play();if(pr&&pr.catch)pr.catch(function(){})} else au.muted=!au.muted });
+  /* بديل التشغيل التلقائي: إن منع المتصفح التشغيل، يبدأ الصوت عند أول لمسة */
+  function first(e){ if(document.getElementById("intro")) return; if(e.target&&e.target.closest&&e.target.closest("#mini,#pl")){drop();return} drop(); if(au.paused&&!touched&&!au.ended&&C.audio.autoplay!==false){VOICE.play()} }
+  function drop(){["pointerdown","keydown","touchend"].forEach(function(ev){removeEventListener(ev,first,true)})}
+  ["pointerdown","keydown","touchend"].forEach(function(ev){addEventListener(ev,first,true)});
 }
 function setupCountdown(){
   if(!EV||!C.event.countdown||!$("#cd")) return;
@@ -358,7 +374,7 @@ function runIntro(){
   var nm=$("#inp"); function saveName(){ if(nm&&nm.value.trim()){guestName=nm.value.trim().slice(0,40); var rn=$("#rn"); if(rn&&!rn.value) rn.value=guestName; var cn=$("#cn"); if(cn&&!cn.value) cn.value=guestName; } }
   particles($("#ip"),50,"222,196,98"); setupOrbit(I);
   var op=$("#open"); if(op) setTimeout(function(){try{op.focus({preventScroll:true})}catch(e){}},1700);
-  document.addEventListener("keydown",function esc(e){if(e.key==="Escape"&&document.getElementById("intro")){document.removeEventListener("keydown",esc);saveName();started=true;close()}});
+  document.addEventListener("keydown",function esc(e){if(e.key==="Escape"&&document.getElementById("intro")){document.removeEventListener("keydown",esc);saveName();started=true;if(VOICE)VOICE.play();close()}});
   if(reduce){ ["isc","ititle","iline","inm","open"].forEach(function(id){var e=$("#"+id);if(e)e.style.opacity=1}); $("#ring").style.strokeDashoffset=0 }
   else {
     an($("#ring"),[{strokeDashoffset:590},{strokeDashoffset:0}],{duration:1300,easing:"cubic-bezier(.65,0,.35,1)"});
@@ -366,7 +382,7 @@ function runIntro(){
       an($("#"+x[0]),[{opacity:0,transform:"translateY(16px)"},{opacity:1,transform:"translateY(0)"}],{duration:650,delay:x[1],easing:E}) });
   }
   function openDoors(){
-    if(started) return; started=true; saveName(); chime();
+    if(started) return; started=true; saveName(); chime(); if(VOICE) VOICE.play(C.effects.chime?1700:0);
     if(reduce){ I.style.opacity=0; setTimeout(close,50); return }
     var D="cubic-bezier(.76,0,.24,1)";
     an($("#icont"),[{opacity:1,transform:"scale(1)"},{opacity:0,transform:"scale(.92)"}],{duration:450,easing:"ease-in"});
@@ -378,7 +394,7 @@ function runIntro(){
     done(an(I,[{opacity:1},{opacity:0}],{duration:450,delay:1750}),close);
   }
   $("#open").addEventListener("click",openDoors);
-  $("#skip").addEventListener("click",function(){saveName();started=true;close()});
+  $("#skip").addEventListener("click",function(){saveName();started=true;if(VOICE)VOICE.play();close()});
   if(nm) nm.addEventListener("keydown",function(e){if(e.key==="Enter")openDoors()});
 }
 /* ───── التشغيل ───── */
@@ -392,13 +408,14 @@ function boot(){
   if(after){ order=order.filter(function(k){return k!=="rsvp"}); order.unshift("after"); } else order.push("after");
   var html='<a class="skip" href="#main">تخطّي إلى المحتوى</a>'+sHero()+'<main id="main" tabindex="-1">'+order.filter(function(k){return k!=="after"||after}).map(function(k,i){ return (k==="goals"?sQuote():"")+S[k]() }).join("")+'</main>'+sFooter();
   app.innerHTML=html+(C.effects.intro&&!qs.get("skip")?sIntro():"");
-  jsonLd();track("view_invite");setupAudio();setupCountdown();setupCalendar();setupRsvp();setupShare();setupCert();setupSpot();setupRipple();
+  jsonLd();track("view_invite");if(C.audio.enabled&&C.audio.file) app.insertAdjacentHTML("beforeend",'<button class="btn-i mini" id="mini" aria-label="تشغيل الكلمة الصوتية" aria-pressed="true">'+ic("mute",20)+'</button>');
+  setupAudio();setupCountdown();setupCalendar();setupRsvp();setupShare();setupCert();setupSpot();setupRipple();
   if(C.effects.particles) particles($("#hp"),45,"222,196,98");
   setupReveal();setupOrbit(document);
   if(document.readyState==="complete") later(loadLibs); else addEventListener("load",function(){later(loadLibs)});
   if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")) addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
   var rp=$("#replay"); if(rp) rp.addEventListener("click",function(){ app.insertAdjacentHTML("beforeend",sIntro()); runIntro(); });
-  if(C.effects.intro&&!qs.get("skip")) runIntro(); 
+  if(C.effects.intro&&!qs.get("skip")) runIntro(); else if(VOICE) VOICE.play(); 
 }
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 })();

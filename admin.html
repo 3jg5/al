@@ -101,7 +101,7 @@ sec("🏫 بيانات عامة",function(b){
 },"R1");
 sec("✉ الرسالة",function(b){b.appendChild(field("letterTitle","العنوان"));b.appendChild(field("letter","نص الرسالة (اتركوا سطرًا فارغًا بين الفقرات)","area"))},"R2");
 sec("🎙 الكلمة الصوتية",function(b){
-  b.appendChild(field("audio.enabled","عرض القسم","bool"));b.appendChild(field("audio.file","اسم ملف الصوت","text","ارفعوا ملف الصوت على GitHub بجانب index.html (لا يمكن رفعه من هنا)، ثم اكتبوا اسمه مثل voice.mp3"));
+  b.appendChild(field("audio.enabled","عرض القسم","bool"));b.appendChild(field("audio.autoplay","تشغيل الكلمة تلقائيًا عند فتح الدعوة","bool"));b.appendChild(field("audio.file","اسم ملف الصوت","text","ارفعوا ملف الصوت على GitHub بجانب index.html (لا يمكن رفعه من هنا)، ثم اكتبوا اسمه مثل voice.mp3"));
   b.appendChild(field("audio.title","العنوان"));b.appendChild(field("audio.transcript","نص الكلمة","area"))},"R2");
 sec("🎯 الأهداف",function(b){var x=el("<div></div>");b.appendChild(x);list(x,"goals",[["title","العنوان"],["text","الوصف","area"]],{icon:"star",title:"",text:""})},"R3");
 sec("📍 الموقع",function(b){
