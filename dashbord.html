@@ -1,52 +1,465 @@
 <!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>لوحة إحصائيات الملتقى</title>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>لوحة الإحصائيات | ملتقى أولياء الأمور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{--g:#b8893a;--d:#14301f}*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f6f3ec;color:#1d1d1d}
-header{background:var(--d);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}h1{font-size:1.1rem;margin:0}
-main{max-width:1000px;margin:auto;padding:14px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.k{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 5px #0001}.k b{display:block;font-size:1.8rem;color:var(--d)}
-.box{background:#fff;border-radius:12px;padding:14px;margin-top:12px;overflow-x:auto;box-shadow:0 1px 5px #0001}table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:8px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap}th{background:#faf6ec}
-button,input{font:inherit;padding:10px 14px;border-radius:8px;border:1.5px solid #bbb}button{background:var(--g);color:#fff;border:0;cursor:pointer}.bar{background:#eee;border-radius:6px;height:10px;min-width:90px}.bar i{display:block;height:100%;background:var(--g);border-radius:6px}
-#login{max-width:340px;margin:60px auto;background:#fff;padding:20px;border-radius:12px}#login input{width:100%;margin:6px 0}.err{color:#b3261e}[hidden]{display:none!important}
-</style></head><body>
-<div id="login"><h1>دخول الإدارة</h1><input id="em" type="email" placeholder="البريد" dir="ltr" autocomplete="username"><input id="pw" type="password" placeholder="كلمة المرور" dir="ltr" autocomplete="current-password"><button id="in" style="width:100%">دخول</button><p class="err" id="le" role="alert"></p></div>
-<div id="app" hidden><header><h1>لوحة إحصائيات ملتقى أولياء الأمور</h1><div><button id="xl">⬇ تصدير Excel</button> <button id="out" style="background:#555">خروج</button></div></header>
-<main><div class="cards" id="cards"></div>
-<div class="box"><b>حسب الصف</b><table id="tg"></table></div>
-<div class="box"><b>حسب الشعبة</b><table id="ts"></table></div>
-<div class="box"><b>التسجيلات</b> <input id="f" placeholder="بحث بالاسم أو الهاتف" style="margin-right:8px"><table id="tr"></table></div></main></div>
+:root{
+  --g:#dec462;
+  --g-dark:#b8893a;
+  --d:#052f25;
+  --d2:#0b4a3b;
+  --bg:#f6f3ec;
+  --c:#ffffff;
+  --t:#1d1d1d;
+  --e:#b3261e;
+  --ok:#1b6e3c;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Tajawal',Tahoma,"Segoe UI",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--t);
+  line-height:1.6;
+}
+header{
+  background:radial-gradient(circle at 50% 25%, var(--d2), var(--d) 75%);
+  color:#f4f1e6;
+  padding:18px 20px;
+  border-bottom:3px solid var(--g);
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.h-brand{display:flex;align-items:center;gap:12px}
+.h-brand img{height:48px;width:auto}
+.h-brand h1{margin:0;font-family:'Amiri',serif;font-size:1.5rem;color:var(--g);line-height:1.2}
+.h-brand p{margin:2px 0 0;font-size:.85rem;opacity:.85}
+.h-acts{display:flex;gap:8px;flex-wrap:wrap}
+
+main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+.card{
+  background:var(--c);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 4px 20px rgba(5,47,37,.06);
+  border:1px solid rgba(184,137,58,.18);
+}
+
+/* شاشة تسجيل الدخول */
+.login-box{max-width:400px;margin:60px auto}
+.login-box h2{margin-top:0;font-family:'Amiri',serif;color:var(--d);text-align:center}
+label{display:block;font-weight:700;margin:12px 0 6px;color:var(--d)}
+input,select{
+  width:100%;
+  padding:11px 14px;
+  font:inherit;
+  border:1.5px solid #cbd5d1;
+  border-radius:10px;
+  background:#fff;
+}
+input:focus,select:focus{border-color:var(--g-dark);outline:3px solid rgba(222,196,98,.35)}
+
+.btn{
+  padding:10px 18px;
+  border:0;
+  border-radius:10px;
+  background:var(--d);
+  color:var(--g);
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.btn:hover{background:var(--d2)}
+.btn.gold{background:var(--g);color:var(--d)}
+.btn.gold:hover{background:#e6cf75}
+.btn.alt{background:transparent;color:#f4f1e6;border:1.5px solid rgba(222,196,98,.5)}
+.btn.alt:hover{background:rgba(222,196,98,.15)}
+.btn.dark-alt{background:#fff;color:var(--d);border:1.5px solid var(--d)}
+.btn.dark-alt:hover{background:#f4f7f5}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* بطاقات الإحصائيات */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:14px;
+  margin-bottom:18px;
+}
+.stat-card{
+  background:var(--c);
+  border-radius:14px;
+  padding:16px 18px;
+  border:1px solid rgba(184,137,58,.2);
+  box-shadow:0 2px 12px rgba(5,47,37,.04);
+}
+.stat-card.highlight{
+  background:linear-gradient(135deg, var(--d), var(--d2));
+  color:#fff;
+  border-color:var(--g);
+}
+.stat-title{font-size:.9rem;opacity:.8;margin-bottom:4px;font-weight:700}
+.stat-val{font-size:2rem;font-weight:700;line-height:1.2;color:var(--d)}
+.stat-card.highlight .stat-val{color:var(--g)}
+.stat-sub{font-size:.82rem;margin-top:4px;opacity:.75}
+
+/* الفلاتر والجدول */
+.filters{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:10px;
+  margin-bottom:14px;
+}
+@media(max-width:640px){.filters{grid-template-columns:1fr}}
+
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e2e8e5}
+table{width:100%;border-collapse:collapse;text-align:right;font-size:.95rem}
+th{background:var(--d);color:var(--g);padding:12px;font-weight:700;white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid #edf2ef}
+tr:hover td{background:#fafbf9}
+.badge{
+  background:#e9f6ee;
+  color:var(--ok);
+  padding:3px 10px;
+  border-radius:999px;
+  font-size:.82rem;
+  font-weight:700;
+  white-space:nowrap;
+}
+.err{color:var(--e);font-size:.9rem;margin-top:8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-brand">
+    <img src="farooq-logo-light.png" alt="شعار الفاروق">
+    <div>
+      <h1>لوحة متابعة الحضور</h1>
+      <p>ملتقى أولياء الأمور — مدرسة الفاروق للتعليم الأساسي للبنين</p>
+    </div>
+  </div>
+  <div class="h-acts" id="topActs" hidden>
+    <button class="btn gold" id="btnExcel">تصدير ملف Excel</button>
+    <button class="btn alt" id="btnLogout">تسجيل الخروج</button>
+  </div>
+</header>
+
+<main>
+  <!-- نموذج دخول المشرف -->
+  <section class="card login-box" id="loginSec">
+    <h2>دخول الإدارة</h2>
+    <form id="loginForm">
+      <label for="email">البريد الإلكتروني</label>
+      <input id="email" type="email" required autocomplete="username" dir="ltr" style="text-align:right">
+      <label for="pass">كلمة المرور</label>
+      <input id="pass" type="password" required autocomplete="current-password" dir="ltr" style="text-align:right">
+      <div class="err" id="loginErr"></div>
+      <button class="btn" id="btnLogin" style="width:100%;margin-top:16px">دخول</button>
+    </form>
+  </section>
+
+  <!-- محتوى لوحة الإحصائيات -->
+  <section id="dashSec" hidden>
+    <div class="stats-grid">
+      <div class="stat-card highlight">
+        <div class="stat-title">إجمالي الحضور المؤكد</div>
+        <div class="stat-val" id="stTotal">0</div>
+        <div class="stat-sub" id="stPct">من إجمالي الطلبة</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">الصف العاشر</div>
+        <div class="stat-val" id="st10">0</div>
+        <div class="stat-sub" id="sub10">ولي أمر</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">الصف الحادي عشر</div>
+        <div class="stat-val" id="st11">0</div>
+        <div class="stat-sub" id="sub11">ولي أمر</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">الصف الثاني عشر</div>
+        <div class="stat-val" id="st12">0</div>
+        <div class="stat-sub" id="sub12">ولي أمر</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filters">
+        <input id="fSearch" type="search" placeholder="بحث باسم الطالب أو ولي الأمر أو الهاتف...">
+        <select id="fGrade">
+          <option value="">جميع الصفوف</option>
+          <option value="10">الصف العاشر</option>
+          <option value="11">الصف الحادي عشر</option>
+          <option value="12">الصف الثاني عشر</option>
+        </select>
+        <select id="fSec" disabled>
+          <option value="">جميع الشعب</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>اسم الطالب</th>
+              <th>الصف / الشعبة</th>
+              <th>اسم ولي الأمر</th>
+              <th>رقم الهاتف</th>
+              <th>وقت التسجيل</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody">
+            <tr><td colspan="7" style="text-align:center;padding:20px">جاري تحميل البيانات...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer style="text-align:center;padding:1.5rem 1rem;color:#5c6863;font-size:.9rem">
+  تصميم وتطوير: <strong style="color:var(--d)">علي بن محمد آل رحمة</strong> © ٢٠٢٦
+</footer>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="firebase-config.js"></script>
 <script>
-firebase.initializeApp(FB_CONFIG);const au=firebase.auth(),db=firebase.firestore(),$=i=>document.getElementById(i);
-let R=[],M={counts:{},total:0};
-$('in').onclick=()=>au.signInWithEmailAndPassword($('em').value,$('pw').value).catch(()=>$('le').textContent='بيانات الدخول غير صحيحة');
-$('out').onclick=()=>au.signOut();
-au.onAuthStateChanged(async u=>{$('login').hidden=!!u;$('app').hidden=!u;if(!u)return;
- try{const[s,m]=await Promise.all([db.collection('registrations').orderBy('updatedAt','desc').get(),db.doc('meta/sections').get()]);
-  R=s.docs.map(d=>d.data());M=m.data()||M;draw()}catch(e){$('app').hidden=true;$('login').hidden=false;$('le').textContent='هذا الحساب ليس مدرجًا ضمن المشرفين.';au.signOut()}});
-const T=h=>'<tr>'+h.map(x=>'<th>'+x+'</th>').join('')+'</tr>',pc=(a,b)=>b?Math.round(a/b*100):0;
-const dt=r=>r.updatedAt?r.updatedAt.toDate().toLocaleString('ar-OM'):'';
-function stats(){const g={},s={};for(const k in M.counts){const[a]=k.split('-');g[a]=g[a]||{t:0,y:0,n:0};g[a].t+=M.counts[k];s[k]={t:M.counts[k],y:0,n:0}}
- R.forEach(r=>{const k=r.grade+'-'+r.section,f=r.attending?'y':'n';(g[r.grade]=g[r.grade]||{t:0,y:0,n:0})[f]++;(s[k]=s[k]||{t:0,y:0,n:0})[f]++});return{g,s}}
-function draw(){const y=R.filter(r=>r.attending).length,n=R.length-y,{g,s}=stats();
- $('cards').innerHTML=[['إجمالي الطلبة',M.total],['تم الرد',R.length+' ('+pc(R.length,M.total)+'%)'],['سيحضرون',y],['معتذرون',n],['لم يردّوا',Math.max(M.total-R.length,0)]].map(([a,b])=>'<div class="k"><b>'+b+'</b>'+a+'</div>').join('');
- const row=(l,x)=>'<tr><td>'+l+'</td><td>'+x.t+'</td><td>'+x.y+'</td><td>'+x.n+'</td><td>'+(x.t-x.y-x.n)+'</td><td><div class="bar"><i style="width:'+pc(x.y+x.n,x.t)+'%"></i></div> '+pc(x.y+x.n,x.t)+'%</td></tr>';
- const H=['','الطلبة','سيحضر','يعتذر','لم يردّ','نسبة الرد'];
- $('tg').innerHTML=T(H)+Object.keys(g).sort().map(k=>row('الصف '+k,g[k])).join('');
- $('ts').innerHTML=T(H)+Object.keys(s).sort((a,b)=>a.replace('-','.')-b.replace('-','.')).map(k=>row('الصف '+k.split('-')[0]+' / شعبة '+k.split('-')[1],s[k])).join('');
- list()}
-function list(){const q=$('f').value.trim();$('tr').innerHTML=T(['الطالب','الصف','الشعبة','ولي الأمر','الهاتف','القرار','آخر تحديث'])+
- R.filter(r=>!q||(r.studentName+r.parentName+r.phone).includes(q)).slice(0,300).map(r=>{const tr=document.createElement('tr');
- [r.studentName,r.grade,r.section,r.parentName,r.phone,r.attending?'سيحضر':'يعتذر',dt(r)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});return tr.outerHTML}).join('')}
-$('f').oninput=list;
-$('xl').onclick=()=>{const{g,s}=stats(),wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
- const add=(n,a)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(a),n);
- add('التسجيلات',R.map(r=>({'الطالب':r.studentName,'الصف':r.grade,'الشعبة':r.section,'الرقم المدرسي':r.sid,'ولي الأمر':r.parentName,'الهاتف':r.phone,'القرار':r.attending?'سيحضر':'يعتذر','آخر تحديث':dt(r)})));
- const x=(l,o)=>({'البند':l,'الطلبة':o.t,'سيحضر':o.y,'يعتذر':o.n,'لم يردّ':o.t-o.y-o.n,'نسبة الرد %':pc(o.y+o.n,o.t)});
- add('حسب الصف',Object.keys(g).sort().map(k=>x('الصف '+k,g[k])));add('حسب الشعبة',Object.keys(s).sort().map(k=>x('الصف '+k.replace('-',' / شعبة '),s[k])));
- XLSX.writeFile(wb,'forum-registrations-'+new Date().toISOString().slice(0,10)+'.xlsx')};
-</script></body></html>
+firebase.initializeApp(FB_CONFIG);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const $ = id => document.getElementById(id);
+
+const SEC_COUNTS = {10: 7, 11: 11, 12: 12};
+let ALL_REGS = [];
+let STUDENT_TOTALS = { all: 0, 10: 0, 11: 0, 12: 0, secs: {} };
+let unsub = null;
+
+// تحميل أعداد الطلبة من student.json لحساب النسب بدقة
+async function loadStudentMeta() {
+  try {
+    const res = await fetch('student.json');
+    if (!res.ok) return;
+    const list = await res.json();
+    STUDENT_TOTALS.all = list.length;
+    list.forEach(s => {
+      const g = Number(s.g), sec = Number(s.s);
+      STUDENT_TOTALS[g] = (STUDENT_TOTALS[g] || 0) + 1;
+      const key = `${g}-${sec}`;
+      STUDENT_TOTALS.secs[key] = (STUDENT_TOTALS.secs[key] || 0) + 1;
+    });
+    updateStats();
+  } catch (e) {}
+}
+loadStudentMeta();
+
+// مراقبة حالة تسجيل الدخول
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    if (unsub) unsub();
+    $('loginSec').hidden = false;
+    $('dashSec').hidden = true;
+    $('topActs').hidden = true;
+    return;
+  }
+  try {
+    const adminDoc = await db.collection('admins').doc(user.uid).get();
+    if (!adminDoc.exists) {
+      await auth.signOut();
+      $('loginErr').textContent = 'هذا الحساب غير مصرح له بالدخول إلى لوحة الإدارة.';
+      return;
+    }
+    $('loginSec').hidden = true;
+    $('dashSec').hidden = false;
+    $('topActs').hidden = false;
+    listenRegistrations();
+  } catch (err) {
+    $('loginErr').textContent = 'خطأ في التحقق من الصلاحيات: ' + err.message;
+  }
+});
+
+$('loginForm').onsubmit = async e => {
+  e.preventDefault();
+  const btn = $('btnLogin');
+  btn.disabled = true;
+  $('loginErr').textContent = '';
+  try {
+    await auth.signInWithEmailAndPassword($('email').value.trim(), $('pass').value);
+  } catch (err) {
+    $('loginErr').textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+$('btnLogout').onclick = () => auth.signOut();
+
+// الاستماع اللحظي لتسجيلات الحضور
+function listenRegistrations() {
+  unsub = db.collection('registrations').orderBy('updatedAt', 'desc').onSnapshot(snap => {
+    ALL_REGS = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.attending !== false) ALL_REGS.push(d);
+    });
+    updateStats();
+    renderTable();
+  }, err => {
+    $('tblBody').innerHTML = `<tr><td colspan="7" style="color:var(--e);text-align:center">تعذّر جلب البيانات: ${err.message}</td></tr>`;
+  });
+}
+
+function updateStats() {
+  const total = ALL_REGS.length;
+  const c10 = ALL_REGS.filter(x => Number(x.grade) === 10).length;
+  const c11 = ALL_REGS.filter(x => Number(x.grade) === 11).length;
+  const c12 = ALL_REGS.filter(x => Number(x.grade) === 12).length;
+
+  $('stTotal').textContent = total;
+  if (STUDENT_TOTALS.all > 0) {
+    const pct = ((total / STUDENT_TOTALS.all) * 100).toFixed(1);
+    $('stPct').textContent = `بنسبة ${pct}% من إجمالي (${STUDENT_TOTALS.all}) طالب`;
+  }
+
+  $('st10').textContent = c10;
+  $('sub10').textContent = STUDENT_TOTALS[10] ? `من أصل ${STUDENT_TOTALS[10]} طالب` : 'ولي أمر حاضر';
+
+  $('st11').textContent = c11;
+  $('sub11').textContent = STUDENT_TOTALS[11] ? `من أصل ${STUDENT_TOTALS[11]} طالب` : 'ولي أمر حاضر';
+
+  $('st12').textContent = c12;
+  $('sub12').textContent = STUDENT_TOTALS[12] ? `من أصل ${STUDENT_TOTALS[12]} طالب` : 'ولي أمر حاضر';
+}
+
+function formatTime(ts) {
+  if (!ts || !ts.toDate) return '—';
+  const d = ts.toDate();
+  return d.toLocaleTimeString('ar-OM', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderTable() {
+  const q = $('fSearch').value.trim().toLowerCase();
+  const fg = $('fGrade').value;
+  const fs = $('fSec').value;
+
+  const filtered = ALL_REGS.filter(x => {
+    if (fg && String(x.grade) !== fg) return false;
+    if (fs && String(x.section) !== fs) return false;
+    if (q) {
+      const hay = `${x.studentName} ${x.parentName} ${x.phone}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tb = $('tblBody');
+  if (!filtered.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#666">لا توجد سجلات حضور مطابقة.</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = filtered.map((x, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td style="font-weight:700;color:var(--d)">${x.studentName || ''}</td>
+      <td>الصف ${x.grade} / شعبة ${x.section}</td>
+      <td>${x.parentName || ''}</td>
+      <td dir="ltr" style="text-align:right">${x.phone ? '+' + x.phone : ''}</td>
+      <td>${formatTime(x.updatedAt)}</td>
+      <td><span class="badge">حاضر</span></td>
+    </tr>
+  `).join('');
+}
+
+$('fSearch').oninput = renderTable;
+
+$('fGrade').onchange = () => {
+  const g = $('fGrade').value;
+  const s = $('fSec');
+  s.innerHTML = '<option value="">جميع الشعب</option>';
+  if (g && SEC_COUNTS[g]) {
+    for (let i = 1; i <= SEC_COUNTS[g]; i++) {
+      s.add(new Option('شعبة ' + i, i));
+    }
+    s.disabled = false;
+  } else {
+    s.disabled = true;
+  }
+  renderTable();
+};
+
+$('fSec').onchange = renderTable;
+
+// تصدير ملف Excel منسق (ورقتان: كشف الحضور + إحصائية الشعب)
+$('btnExcel').onclick = () => {
+  if (!ALL_REGS.length) {
+    alert('لا توجد بيانات حضور لتصديرها حالياً.');
+    return;
+  }
+
+  // الورقة الأولى: كشف الحضور التفصيلي
+  const rows1 = ALL_REGS.map((x, i) => ({
+    'م': i + 1,
+    'الرقم المدرسي': x.sid || '',
+    'اسم الطالب': x.studentName || '',
+    'الصف': Number(x.grade),
+    'الشعبة': Number(x.section),
+    'اسم ولي الأمر': x.parentName || '',
+    'رقم الهاتف': x.phone ? '+' + x.phone : '',
+    'وقت التسجيل': formatTime(x.updatedAt),
+    'الحالة': 'حاضر'
+  }));
+
+  // الورقة الثانية: ملخص الإحصائيات حسب الصف والشعبة
+  const rows2 = [];
+  [10, 11, 12].forEach(g => {
+    for (let s = 1; s <= SEC_COUNTS[g]; s++) {
+      const attended = ALL_REGS.filter(x => Number(x.grade) === g && Number(x.section) === s).length;
+      const totalSec = STUDENT_TOTALS.secs[`${g}-${s}`] || 0;
+      const pct = totalSec > 0 ? ((attended / totalSec) * 100).toFixed(1) + '%' : '-';
+      rows2.push({
+        'الصف': g,
+        'الشعبة': s,
+        'عدد الحاضرين': attended,
+        'إجمالي طلبة الشعبة': totalSec || '-',
+        'نسبة الحضور': pct
+      });
+    }
+  });
+
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+
+  const ws1 = XLSX.utils.json_to_sheet(rows1);
+  ws1['!cols'] = [{wch:5},{wch:15},{wch:32},{wch:8},{wch:8},{wch:28},{wch:16},{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'كشف الحضور');
+
+  const ws2 = XLSX.utils.json_to_sheet(rows2);
+  ws2['!cols'] = [{wch:10},{wch:10},{wch:16},{wch:20},{wch:15}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'إحصائية الشعب');
+
+  XLSX.writeFile(wb, 'حضور_ملتقى_أولياء_الأمور_الفاروق.xlsx');
+};
+</script>
+</body>
+</html>
